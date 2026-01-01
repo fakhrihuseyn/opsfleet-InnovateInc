@@ -29,7 +29,7 @@ Asset-Package/
 # Architecture diagram working files
 # .infra/
 *.drawio.bak
-
+kube_icons/
 # Documentation build artifacts
 docs/_build/
 site/
