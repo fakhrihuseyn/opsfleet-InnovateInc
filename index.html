@@ -6,8 +6,9 @@
   <title>Innovate Inc. Architecture Diagrams</title>
 
   <!-- Cytoscape core + Dagre layout -->
-  <script src="https://unpkg.com/cytoscape@3.27.0/dist/cytosccript>
-  <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.jsscript src="https://unpkg.com/cytoscape-dagre@2.5.agre.js</script>
+  <script src="https://unpkg.com/cytoscape@3.27.0/dist/cytoscape.min.js"></script>
+  <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+  <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
 
   <style>
     :root {
@@ -83,7 +84,7 @@
             'background-color': '#131820',
             'border-color': '#2a313a',
             'border-width': 1,
-            'label': 'data(label)',
+            'label': 'data(display)',
             'color': '#e3e6eb',
             'font-size': 12,
             'text-wrap': 'wrap',
@@ -97,10 +98,6 @@
           }
         },
         {
-          selector: 'node[subtitle]',
-          style: { 'label': 'data(label) + "\\n" + data(subtitle)', 'color': '#cfd6de' }
-        },
-        {
           selector: 'node[icon]',
           style: {
             'background-image': 'data(icon)',
@@ -112,7 +109,7 @@
         },
         {
           /* containers: VPC, AZs, Subnets, etc. */
-          selector: 'node[group = "container"]',
+          selector: 'node.container',
           style: {
             'shape': 'round-rectangle',
             'background-color': '#131820',
@@ -140,6 +137,7 @@
           }
         },
         { selector: '.highlight', style: { 'border-color': '#ffd166', 'border-width': 3, 'line-color': '#ffd166', 'target-arrow-color': '#ffd166' } },
+        { selector: '.rank-edge', style: { 'line-opacity': 0, 'target-arrow-shape': 'none', 'width': 0 } },
         { selector: ':selected', style: { 'border-color': '#4da3ff', 'border-width': 3 } }
       ]
     });
@@ -163,24 +161,29 @@
       const containerIds = new Set();
 
       // Build nodes
+
       (json.nodes || []).forEach(n => {
+        const display = n.subtitle ? `${n.label || n.id}\n${n.subtitle}` : (n.label || n.id);
         const data = {
           id: n.id,
           label: n.label || n.id,
           subtitle: n.subtitle || null,
+          display,
           icon: normalizeIconPath(n.icon),
         };
 
-        // Mark containers
+        const node = { data };
+
+        // Mark container nodes with a class
         if (n.type === 'container') {
-          data.group = 'container';
+          node.classes = 'container';
           containerIds.add(n.id);
         }
 
         // Compound parent relationship
         if (n.parentNode) data.parent = n.parentNode;
 
-        elements.push({ data });
+        elements.push(node);
 
         // Optional: nudging rank if positioned "above" a relative node (e.g., ALB above VPC)
         if (n.position && n.position.relativeTo && n.position.side === 'above') {
