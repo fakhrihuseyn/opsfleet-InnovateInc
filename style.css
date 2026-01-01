@@ -1,0 +1,55 @@
+:root {
+  --bg: #1e1f20; /* soft light gray background */
+  --panel: #1b1b1b; /* slightly darker panel for toolbar */
+  --text: #f1f1f1; /* dark text for readability on light bg */
+  --muted: #ffffff; /* gray for muted labels and borders */
+  --accent: #dbec98; /* accent blue */
+  --border: #5f5f5f; /* soft border */
+  --edge: #ffffff; /* default connector color */
+  --highlight: #000000; /* highlight color for search/hover */
+  --dot: rgba(0,0,0,0.03);
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  /* page background is plain; dotted decoration moved to container frames */
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: 320px 1fr auto auto auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+select, input[type="text"], button {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  border-radius: 6px;
+  outline: none;
+}
+
+button { cursor: pointer; }
+
+#cy { width: 100%; height: calc(100vh - 58px); display: block; }
+.legend { padding: 6px 10px; color: var(--muted); font-size: 12px; }
+
+/* Node / icon styling */
+.node-label { font-size: 16px; color: var(--text); }
+
+/* Scale control styles moved from inline attributes */
+.scale-label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+.scale-input { width: 72px; padding: 6px; border-radius: 6px; background: var(--panel); color: var(--text); border: 1px solid var(--border); }
+.scale-unit { font-size: 12px; color: var(--muted); }

@@ -9,50 +9,7 @@
   <script src="https://unpkg.com/cytoscape@3.27.0/dist/cytoscape.min.js"></script>
   <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
   <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
-
-  <style>
-    :root {
-      --bg: #0f1216;
-      --panel: #181d24;
-      --text: #e3e6eb;
-      --muted: #9aa3ad;
-      --accent: #4da3ff;
-      --border: #2a313a;
-    }
-    html, body {
-      height: 100%;
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-    }
-    .toolbar {
-      display: grid;
-      grid-template-columns: 320px 1fr auto auto auto auto;
-      gap: 8px;
-      align-items: center;
-      padding: 10px;
-      border-bottom: 1px solid var(--border);
-      background: var(--panel);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    select, input[type="text"], button {
-      background: #11161c;
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 8px 10px;
-      border-radius: 6px;
-      outline: none;
-    }
-    button { cursor: pointer; }
-    #cy { width: 100%; height: calc(100vh - 58px); display: block; }
-    .legend { padding: 6px 10px; color: var(--muted); font-size: 12px; }
-
-    /* Node / icon styling */
-    .node-label { font-size: 16px; color: var(--text); }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="toolbar">
@@ -64,10 +21,10 @@
     </select>
 
     <input id="searchBox" type="text" placeholder="Search nodes..." />
-    <label style="display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;">
+    <label class="scale-label">
       <span>Scale</span>
-      <input id="scalePercent" type="number" min="10" max="200" value="95" style="width:72px;padding:6px;border-radius:6px;background:#0f1418;color:var(--text);border:1px solid var(--border);" title="Scale percent applied after fit">
-      <span style="font-size:12px;color:var(--muted);">%</span>
+      <input id="scalePercent" class="scale-input" type="number" min="10" max="200" value="95" title="Scale percent applied after fit">
+      <span class="scale-unit">%</span>
     </label>
     <button id="btnFit">Fit</button>
     <button id="btnZoomIn">+</button>
@@ -80,6 +37,19 @@
   <script>
     cytoscape.use(cytoscapeDagre);
 
+    // Read colors from CSS variables so all color values live in style.css
+    const __css = getComputedStyle(document.documentElement);
+    const colors = {
+      bg: __css.getPropertyValue('--bg').trim(),
+      panel: __css.getPropertyValue('--panel').trim(),
+      text: __css.getPropertyValue('--text').trim(),
+      muted: __css.getPropertyValue('--muted').trim(),
+      accent: __css.getPropertyValue('--accent').trim(),
+      border: __css.getPropertyValue('--border').trim(),
+      edge: (__css.getPropertyValue('--edge') || __css.getPropertyValue('--muted')).trim(),
+      highlight: (__css.getPropertyValue('--highlight') || '#ffd166').trim()
+    };
+
     const cy = cytoscape({
       container: document.getElementById('cy'),
       wheelSensitivity: 0.2,
@@ -89,11 +59,11 @@
           selector: 'node',
           style: {
             'shape': 'round-rectangle',
-            'background-color': '#0f1418',
-            'border-color': '#1f2933',
+            'background-color': colors.panel,
+            'border-color': colors.border,
             'border-width': 1,
             'label': 'data(display)',
-            'color': '#e3e6eb',
+            'color': colors.text,
             'font-size': 16,
             'text-wrap': 'wrap',
             'text-max-width': 140,
@@ -131,10 +101,11 @@
           selector: 'node.container',
           style: {
             'shape': 'round-rectangle',
-            'background-color': '#131820',
-            'border-color': '#4da3ff',
+            'background-color': colors.panel,
+            'border-color': colors.accent,
             'border-width': 2,
-            'line-style': 'dashed',
+            'border-style': 'dotted',
+            'border-dash-array': '8 8',
             'text-valign': 'top',
             'text-margin-y': -8,
             'font-size': 16,
@@ -149,22 +120,22 @@
         {
           selector: 'edge',
           style: {
-            'line-color': '#3b4652',
+            'line-color': colors.edge,
             'width': 2,
             'target-arrow-shape': 'triangle',
-            'target-arrow-color': '#3b4652',
+            'target-arrow-color': colors.edge,
             'curve-style': 'bezier',
             'label': 'data(label)',
             'font-size': 10,
-            'text-background-color': '#0f1216',
+            'text-background-color': colors.bg,
             'text-background-opacity': 0.7,
             'text-background-padding': 2,
-            'color': '#9aa3ad'
+            'color': colors.muted
           }
         },
-        { selector: '.highlight', style: { 'border-color': '#ffd166', 'border-width': 3, 'line-color': '#ffd166', 'target-arrow-color': '#ffd166' } },
+        { selector: '.highlight', style: { 'border-color': colors.highlight, 'border-width': 3, 'line-color': colors.highlight, 'target-arrow-color': colors.highlight } },
         { selector: '.rank-edge', style: { 'line-opacity': 0, 'target-arrow-shape': 'none', 'width': 0 } },
-        { selector: ':selected', style: { 'border-color': '#4da3ff', 'border-width': 3 } }
+        { selector: ':selected', style: { 'border-color': colors.accent, 'border-width': 3, 'border-style': 'dashed', 'border-dash-array': '10 6' } }
       ]
     });
 
@@ -262,7 +233,9 @@
         elements.push({
           data: {
             id: `${source}-->${target}-${Math.random().toString(36).slice(2,7)}`,
-            source, target, label: e.label || ''
+            source,
+            target,
+            label: e.label || ''
           }
         });
       });
