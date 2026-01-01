@@ -10,31 +10,31 @@
       "id": "route53",
       "label": "Route 53",
       "subtitle": "DNS Management",
-      "icon": "/assets/icons/route-53-hosted-zone.png"
+      "icon": "/assets/icons/route-53-hosted-zone.svg"
     },
     {
       "id": "cloudfront",
       "label": "CloudFront",
       "subtitle": "Global CDN",
-      "icon": "/assets/icons/cloudfront-cdn.png"
+      "icon": "/assets/icons/cloudfront-cdn.svg"
     },
     {
       "id": "waf",
       "label": "AWS WAF",
       "subtitle": "Web Application Firewall",
-      "icon": "/assets/icons/waf.png"
+      "icon": "/assets/icons/waf.svg"
     },
     {
       "id": "alb",
       "label": "Application Load Balancer",
       "subtitle": "Load Distribution",
-      "icon": "/assets/icons/alb.png"
+      "icon": "/assets/icons/alb.svg"
     },
     {
       "id": "vpc",
       "label": "VPC",
       "subtitle": "Production Environment",
-      "icon": "/assets/icons/vpc.png",
+      "icon": "/assets/icons/vpc.svg",
       "type": "container"
     },
     {
@@ -48,27 +48,27 @@
       "id": "rds",
       "label": "Amazon RDS",
       "subtitle": "PostgreSQL Database",
-      "icon": "/assets/icons/rds.png",
+      "icon": "/assets/icons/rds.svg",
       "parentNode": "vpc"
     },
     {
       "id": "elasticache",
       "label": "ElastiCache",
       "subtitle": "Redis Cluster",
-      "icon": "/assets/icons/elasticache.png",
+      "icon": "/assets/icons/elasticache.svg",
       "parentNode": "vpc"
     },
     {
       "id": "ecr",
       "label": "Amazon ECR",
       "subtitle": "Container Registry",
-      "icon": "/assets/icons/ecr-registry.png"
+      "icon": "/assets/icons/ecr-registry.svg"
     },
     {
       "id": "s3",
       "label": "Amazon S3",
       "subtitle": "Object Storage",
-      "icon": "/assets/icons/s3-storage.png"
+      "icon": "/assets/icons/s3-storage.svg"
     },
     {
       "id": "secrets",
@@ -80,7 +80,7 @@
       "id": "cloudwatch",
       "label": "CloudWatch",
       "subtitle": "Monitoring & Logging",
-      "icon": "/assets/icons/cloudwatch.png"
+      "icon": "/assets/icons/cloudwatch.svg"
     }
   ],
   "edges": [

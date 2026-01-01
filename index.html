@@ -28,7 +28,7 @@
     }
     .toolbar {
       display: grid;
-      grid-template-columns: 320px 1fr auto auto auto;
+      grid-template-columns: 320px 1fr auto auto auto auto;
       gap: 8px;
       align-items: center;
       padding: 10px;
@@ -51,7 +51,7 @@
     .legend { padding: 6px 10px; color: var(--muted); font-size: 12px; }
 
     /* Node / icon styling */
-    .node-label { font-size: 12px; color: var(--text); }
+    .node-label { font-size: 16px; color: var(--text); }
   </style>
 </head>
 <body>
@@ -64,6 +64,11 @@
     </select>
 
     <input id="searchBox" type="text" placeholder="Search nodes..." />
+    <label style="display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;">
+      <span>Scale</span>
+      <input id="scalePercent" type="number" min="10" max="200" value="95" style="width:72px;padding:6px;border-radius:6px;background:#0f1418;color:var(--text);border:1px solid var(--border);" title="Scale percent applied after fit">
+      <span style="font-size:12px;color:var(--muted);">%</span>
+    </label>
     <button id="btnFit">Fit</button>
     <button id="btnZoomIn">+</button>
     <button id="btnZoomOut">−</button>
@@ -84,19 +89,19 @@
           selector: 'node',
           style: {
             'shape': 'round-rectangle',
-            'background-color': '#131820',
-            'border-color': '#2a313a',
+            'background-color': '#0f1418',
+            'border-color': '#1f2933',
             'border-width': 1,
-            'label': 'data(label)',
+            'label': 'data(display)',
             'color': '#e3e6eb',
-            'font-size': 11,
+            'font-size': 16,
             'text-wrap': 'wrap',
-            'text-max-width': 120,
-            'padding': 4,
-            'width': 96,
-            'height': 96,
+            'text-max-width': 140,
+            'padding': 12,
+            'width': 140,
+            'height': 140,
             'text-valign': 'bottom',
-            'text-margin-y': -6,
+            'text-margin-y': 22,
             'text-halign': 'center',
             'overlay-opacity': 0,
           }
@@ -106,11 +111,19 @@
           style: {
             'background-image': 'data(icon)',
             'background-fit': 'contain',
-            'background-width': '64px',
-            'background-height': '64px',
+            'background-width': '48px',
+            'background-height': '48px',
             'background-clip': 'none',
             'background-image-crossorigin': 'anonymous',
             'background-opacity': 1
+          }
+        },
+        {
+          selector: 'node#prometheus, node#grafana, node#fluentbit',
+          style: {
+            'background-width': '1px',
+            'background-height': '1px',
+            'background-fit': 'contain'
           }
         },
         {
@@ -123,7 +136,14 @@
             'border-width': 2,
             'line-style': 'dashed',
             'text-valign': 'top',
-            'text-margin-y': -8
+            'text-margin-y': -8,
+            'font-size': 16,
+            // containers should auto-size to their children: don't force fixed width/height
+            'width': 'auto',
+            'height': 'auto',
+            // containers should not show the large icon background (keeps child icons readable)
+            'background-image': 'none',
+            'padding': 18
           }
         },
         {
@@ -149,10 +169,38 @@
     });
 
     // Dagre layout for L->R architecture flow
-    const layoutOptions = { name: 'dagre', rankDir: 'LR', nodeSep: 50, edgeSep: 20, rankSep: 80 };
+    const layoutOptions = { name: 'dagre', rankDir: 'LR', nodeSep: 220, edgeSep: 60, rankSep: 260 };
 
     const selectEl = document.getElementById('diagramSelect');
     const searchEl = document.getElementById('searchBox');
+    const scaleEl = document.getElementById('scalePercent');
+
+    // Initialize scale percent from localStorage or default to 95
+    (function initScale() {
+      try {
+        const saved = localStorage.getItem('scalePercent');
+        const val = saved ? Number(saved) : null;
+        if (val && Number.isFinite(val)) scaleEl.value = val;
+        else scaleEl.value = 95;
+      } catch (e) { scaleEl.value = 95; }
+    })();
+
+    scaleEl.addEventListener('change', () => {
+      const v = Number(scaleEl.value) || 95;
+      const clamped = Math.max(10, Math.min(200, v));
+      scaleEl.value = clamped;
+      try { localStorage.setItem('scalePercent', String(clamped)); } catch (e) {}
+    });
+
+    function getScalePercent() { return Math.max(10, Math.min(200, Number(scaleEl.value) || 95)); }
+
+    function applyScalePercent(percent, duration = 250) {
+      try {
+        const p = (typeof percent === 'number') ? percent : getScalePercent();
+        const target = cy.zoom() * (p / 100);
+        cy.animate({ zoom: target }, { duration });
+      } catch (e) { /* ignore */ }
+    }
 
     function normalizeIconPath(icon) {
       if (!icon) return null;
@@ -274,34 +322,79 @@
           }
         };
 
-        cy.nodes('.container').forEach(container => {
+        // Use an async for-loop so we can await between layout steps and avoid JS syntax errors
+        const containers = cy.nodes('.container').toArray();
+        for (const container of containers) {
           const children = cy.nodes().filter(n => n.data('parent') === container.id());
-          if (children.length === 0) return;
+          if (children.length === 0) continue;
 
           // pick preset if available
           const cfg = (presets[diagramKey] && presets[diagramKey][container.id()]) || {};
-          const cols = cfg.cols || Math.min(3, children.length) || 1;
+          const cols = cfg.cols || Math.min(4, children.length) || 1;
           const rows = cfg.rows || Math.max(1, Math.ceil(children.length / cols));
-          const width = cfg.width || Math.max(240, Math.min(640, children.length * 90));
-          const height = Math.max(160, rows * 90);
+          // wider cell sizes to avoid overlap between icons and labels
+          const width = cfg.width || Math.max(400, Math.min(2200, children.length * 240));
+          const height = Math.max(240, rows * 180);
 
-          // Compute a bounding box centered inside the container position
+          // Compute a bounding box centered inside the container position (initial placement)
           const cpos = container.position();
           const bbox = { x1: cpos.x - width/2 + 20, y1: cpos.y - height/2 + 18, x2: cpos.x + width/2 - 20, y2: cpos.y + height/2 - 18 };
 
           try {
-            children.layout({ name: 'grid', boundingBox: bbox, avoidOverlap: true, rows, cols, animate: true, fit: false }).run();
+            children.layout({ name: 'grid', boundingBox: bbox, avoidOverlap: true, avoidOverlapPadding: 60, spacingFactor: 2.2, rows, cols, animate: true, fit: false }).run();
+            // after children are placed, compute their bounding box and center the container on them
+            await new Promise(r => setTimeout(r, 120));
+            const childBB = children.boundingBox({ includeNodes: true });
+            if (childBB && Number.isFinite(childBB.x1)) {
+              const cx = (childBB.x1 + childBB.x2) / 2;
+              const cyPos = (childBB.y1 + childBB.y2) / 2;
+              // move the container to center of children so its border fits nicely
+              container.position({ x: cx, y: cyPos });
+            }
           } catch (e) { /* ignore */ }
-        });
+        }
 
-        // Final fit
-        cy.fit(20);
+        // Final fit (show everything and then apply user-chosen scale percent)
+        cy.fit(120);
+        applyScalePercent(getScalePercent(), 250);
     }
 
     // Controls
-    document.getElementById('btnFit').addEventListener('click', () => cy.fit());
-    document.getElementById('btnZoomIn').addEventListener('click', () => cy.zoom(cy.zoom() * 1.2));
-    document.getElementById('btnZoomOut').addEventListener('click', () => cy.zoom(cy.zoom() / 1.2));
+    // Fit now re-runs the tidy layout (dagre + per-container grid) to prevent overlapping icons
+    async function tidyLayout() {
+      try {
+        const dagreLayout = cy.layout(Object.assign({}, layoutOptions, { animate: true, fit: false, boundingBox: undefined, name: 'dagre' }));
+        dagreLayout.run();
+        await new Promise(r => setTimeout(r, 220));
+
+        // reuse presets from loadDiagram
+        const path = selectEl.value;
+        const diagramKey = path.split('/').pop();
+        const presets = {
+          'innovate-cicd-dataflow.json': { 'data-flow': { cols: 2, rows: 3, width: 420 } },
+          'innovate-eks-architecture.json': { 'eks-cluster': { cols: 1, rows: 1, width: 620 }, 'ns-monitoring': { cols: 3, rows: 1, width: 520 }, 'ns-prod': { cols: 3, rows: 3, width: 640 }, 'ns-system': { cols: 1, rows: 3, width: 200 } },
+          'innovate-high-level-architecture.json': { 'vpc': { cols: 2, rows: 3, width: 420 } },
+          'innovate-network-architecture.json': { 'vpc-main': { cols: 2, rows: 4, width: 720 }, 'az-1a': { cols: 1, rows: 3, width: 200 }, 'az-1b': { cols: 1, rows: 3, width: 200 }, 'az-1c': { cols: 1, rows: 3, width: 200 } }
+        };
+
+        cy.nodes('.container').forEach(container => {
+          const children = cy.nodes().filter(n => n.data('parent') === container.id());
+          if (children.length === 0) return;
+          const cfg = (presets[diagramKey] && presets[diagramKey][container.id()]) || {};
+          const cols = cfg.cols || Math.min(4, children.length) || 1;
+          const rows = cfg.rows || Math.max(1, Math.ceil(children.length / cols));
+          const width = cfg.width || Math.max(300, Math.min(1400, children.length * 160));
+          const height = Math.max(240, rows * 160);
+          const cpos = container.position();
+          const bbox = { x1: cpos.x - width/2 + 20, y1: cpos.y - height/2 + 18, x2: cpos.x + width/2 - 20, y2: cpos.y + height/2 - 18 };
+          try { children.layout({ name: 'grid', boundingBox: bbox, avoidOverlap: true, avoidOverlapPadding: 40, spacingFactor: 1.6, rows, cols, animate: true, fit: false }).run(); } catch (e) { /* ignore */ }
+        });
+      } catch (e) { console.warn('tidyLayout failed', e); }
+    }
+
+    document.getElementById('btnFit').addEventListener('click', async () => { await tidyLayout(); cy.fit(120); applyScalePercent(getScalePercent(), 220); });
+    document.getElementById('btnZoomIn').addEventListener('click', () => { try { const z = cy.zoom() * 1.2; cy.animate({ zoom: z }, { duration: 180 }); } catch(e){} });
+    document.getElementById('btnZoomOut').addEventListener('click', () => { try { const z = cy.zoom() / 1.2; cy.animate({ zoom: z }, { duration: 180 }); } catch(e){} });
 
     // Search: highlight matching nodes
     searchEl.addEventListener('input', () => {
@@ -318,8 +411,15 @@
     cy.on('tap', 'node', (evt) => cy.fit(evt.target, 100));
     selectEl.addEventListener('change', (evt) => loadDiagram(evt.target.value));
 
-    // Initial load
-    loadDiagram(selectEl.value);
+    // Initial load: await diagram load, tidy layout and apply user scale
+    (async () => {
+      await loadDiagram(selectEl.value);
+      try {
+        await tidyLayout();
+        cy.fit(120);
+        applyScalePercent(getScalePercent(), 250);
+      } catch (e) { /* ignore */ }
+    })();
   </script>
 </body>
 </html>

@@ -35,7 +35,7 @@
       "id": "ingress",
       "label": "AWS Load Balancer Controller",
       "subtitle": "Ingress Controller",
-      "icon": "/assets/icons/ingress.png",
+      "icon": "/assets/icons/ingress.svg",
       "parentNode": "ns-system"
     },
     {
@@ -77,7 +77,7 @@
       "id": "redis-svc",
       "label": "Redis Service",
       "subtitle": "External Service",
-      "icon": "/assets/icons/redis-svc.png",
+      "icon": "/assets/icons/redis-svc.svg",
       "parentNode": "ns-prod"
     },
     {
@@ -112,21 +112,21 @@
       "id": "fluentbit",
       "label": "Fluent Bit",
       "subtitle": "Log Collection",
-      "icon": "/assets/icons/fluentbit.png",
+      "icon": "/assets/icons/fluentbit.svg",
       "parentNode": "ns-monitoring"
     },
     {
       "id": "cluster-autoscaler",
       "label": "Cluster Autoscaler",
       "subtitle": "Node Scaling",
-      "icon": "/assets/icons/cluster-autoscaler.png",
+      "icon": "/assets/icons/cluster-autoscaler.svg",
       "parentNode": "ns-system"
     },
     {
       "id": "external-dns",
       "label": "External DNS",
       "subtitle": "DNS Management",
-      "icon": "/assets/icons/external-dns.png",
+      "icon": "/assets/icons/external-dns.svg",
       "parentNode": "ns-system"
     }
   ],

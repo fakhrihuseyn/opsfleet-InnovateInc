@@ -4,13 +4,13 @@
       "id": "igw",
       "label": "Internet Gateway",
       "subtitle": "Public Internet Access",
-      "icon": "/assets/icons/igw.png"
+      "icon": "/assets/icons/igw.svg"
     },
     {
       "id": "vpc-main",
       "label": "Production VPC",
       "subtitle": "10.0.0.0/16",
-      "icon": "/assets/icons/vpc-main.png",
+      "icon": "/assets/icons/vpc-main.svg",
       "type": "container"
     },
     {
@@ -116,28 +116,28 @@
       "id": "nat-1a",
       "label": "NAT Gateway",
       "subtitle": "NAT-1A",
-      "icon": "/assets/icons/nat-1a.png",
+      "icon": "/assets/icons/nat-1a.svg",
       "parentNode": "pub-1a"
     },
     {
       "id": "nat-1b",
       "label": "NAT Gateway",
       "subtitle": "NAT-1B",
-      "icon": "/assets/icons/nat-1b.png",
+      "icon": "/assets/icons/nat-1b.svg",
       "parentNode": "pub-1b"
     },
     {
       "id": "nat-1c",
       "label": "NAT Gateway",
       "subtitle": "NAT-1C",
-      "icon": "/assets/icons/nat-1c.png",
+      "icon": "/assets/icons/nat-1c.svg",
       "parentNode": "pub-1c"
     },
     {
       "id": "alb-main",
       "label": "Application Load Balancer",
       "subtitle": "Multi-AZ Distribution",
-      "icon": "/assets/icons/alb-main.png",
+      "icon": "/assets/icons/alb-main.svg",
       "position": {
         "relativeTo": "vpc-main",
         "side": "above"
@@ -168,7 +168,7 @@
       "id": "rds-primary",
       "label": "RDS Primary",
       "subtitle": "PostgreSQL",
-      "icon": "/assets/icons/rds-primary.png",
+      "icon": "/assets/icons/rds-primary.svg",
       "parentNode": "db-1a"
     },
     {
@@ -182,7 +182,7 @@
       "id": "rds-replica",
       "label": "Read Replica",
       "subtitle": "Performance",
-      "icon": "/assets/icons/rds-replica.png",
+      "icon": "/assets/icons/rds-replica.svg",
       "parentNode": "db-1c"
     }
   ],

@@ -28,7 +28,7 @@
       "id": "ecr-registry",
       "label": "ECR Registry",
       "subtitle": "Container Images",
-      "icon": "/assets/icons/ecr-registry.png"
+      "icon": "/assets/icons/ecr-registry.svg"
     },
     {
       "id": "argocd",
@@ -65,7 +65,7 @@
       "id": "cloudfront-cdn",
       "label": "CloudFront CDN",
       "subtitle": "Static Assets",
-      "icon": "/assets/icons/cloudfront-cdn.png",
+      "icon": "/assets/icons/cloudfront-cdn.svg",
       "parentNode": "data-flow"
     },
     {
@@ -86,7 +86,7 @@
       "id": "redis-cache",
       "label": "ElastiCache Redis",
       "subtitle": "Session & Cache",
-      "icon": "/assets/icons/redis-cache.png",
+      "icon": "/assets/icons/redis-cache.svg",
       "parentNode": "data-flow"
     },
     {
@@ -100,14 +100,14 @@
       "id": "s3-storage",
       "label": "S3 Storage",
       "subtitle": "File Storage",
-      "icon": "/assets/icons/s3-storage.png",
+      "icon": "/assets/icons/s3-storage.svg",
       "parentNode": "data-flow"
     },
     {
       "id": "cloudwatch-logs",
       "label": "CloudWatch",
       "subtitle": "Logging & Monitoring",
-      "icon": "/assets/icons/cloudwatch-logs.png",
+      "icon": "/assets/icons/cloudwatch-logs.svg",
       "parentNode": "data-flow"
     }
   ],

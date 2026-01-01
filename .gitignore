@@ -30,6 +30,7 @@ Asset-Package/
 # .infra/
 *.drawio.bak
 kube_icons/
+vendor_icons/
 # Documentation build artifacts
 docs/_build/
 site/
