@@ -49,6 +49,9 @@
     button { cursor: pointer; }
     #cy { width: 100%; height: calc(100vh - 58px); display: block; }
     .legend { padding: 6px 10px; color: var(--muted); font-size: 12px; }
+
+    /* Node / icon styling */
+    .node-label { font-size: 12px; color: var(--text); }
   </style>
 </head>
 <body>
@@ -84,15 +87,16 @@
             'background-color': '#131820',
             'border-color': '#2a313a',
             'border-width': 1,
-            'label': 'data(display)',
+            'label': 'data(label)',
             'color': '#e3e6eb',
-            'font-size': 12,
+            'font-size': 11,
             'text-wrap': 'wrap',
-            'text-max-width': 160,
-            'padding': '12px',
-            'width': 'label',
-            'height': 'label',
-            'text-valign': 'center',
+            'text-max-width': 120,
+            'padding': 4,
+            'width': 96,
+            'height': 96,
+            'text-valign': 'bottom',
+            'text-margin-y': -6,
             'text-halign': 'center',
             'overlay-opacity': 0,
           }
@@ -102,6 +106,8 @@
           style: {
             'background-image': 'data(icon)',
             'background-fit': 'contain',
+            'background-width': '64px',
+            'background-height': '64px',
             'background-clip': 'none',
             'background-image-crossorigin': 'anonymous',
             'background-opacity': 1
@@ -222,9 +228,74 @@
       const json = await res.json();
       const elements = toCytoscapeElements(json);
       cy.elements().remove();
-      cy.add(elements);
-      cy.layout(layoutOptions).run();
-      cy.fit();
+        cy.add(elements);
+
+        // Two-stage layout:
+        // 1) Run Dagre on top-level nodes (those without a parent) so global flow is left->right.
+        const topLevelEles = cy.elements().filter(ele => {
+          if (ele.isEdge()) {
+            const src = cy.getElementById(ele.data('source'));
+            const tgt = cy.getElementById(ele.data('target'));
+            // keep edges that connect top-level nodes (no parent) or connect containers
+            return (!src.data('parent') && !tgt.data('parent')) || (src.data('parent') !== tgt.data('parent'));
+          }
+          return ele.isNode() && !ele.data('parent');
+        });
+
+        await (async () => {
+          const dagreLayout = cy.layout(Object.assign({}, layoutOptions, { animate: true, fit: false, boundingBox: undefined, name: 'dagre' }));
+          try { dagreLayout.run(); } catch (e) { /* ignore layout errors */ }
+          // give layout a moment
+          await new Promise(r => setTimeout(r, 250));
+        })();
+
+        // 2) For each container, layout children inside a grid to make them tidy
+        // Use per-diagram presets to tune rows/cols/width for specific containers
+        const diagramKey = path.split('/').pop();
+        const presets = {
+          'innovate-cicd-dataflow.json': {
+            'data-flow': { cols: 2, rows: 3, width: 420 },
+            // smaller grouped containers
+          },
+          'innovate-eks-architecture.json': {
+            'eks-cluster': { cols: 1, rows: 1, width: 620 },
+            'ns-monitoring': { cols: 3, rows: 1, width: 520 },
+            'ns-prod': { cols: 3, rows: 3, width: 640 },
+            'ns-system': { cols: 1, rows: 3, width: 200 }
+          },
+          'innovate-high-level-architecture.json': {
+            'vpc': { cols: 2, rows: 3, width: 420 }
+          },
+          'innovate-network-architecture.json': {
+            'vpc-main': { cols: 2, rows: 4, width: 720 },
+            'az-1a': { cols: 1, rows: 3, width: 200 },
+            'az-1b': { cols: 1, rows: 3, width: 200 },
+            'az-1c': { cols: 1, rows: 3, width: 200 }
+          }
+        };
+
+        cy.nodes('.container').forEach(container => {
+          const children = cy.nodes().filter(n => n.data('parent') === container.id());
+          if (children.length === 0) return;
+
+          // pick preset if available
+          const cfg = (presets[diagramKey] && presets[diagramKey][container.id()]) || {};
+          const cols = cfg.cols || Math.min(3, children.length) || 1;
+          const rows = cfg.rows || Math.max(1, Math.ceil(children.length / cols));
+          const width = cfg.width || Math.max(240, Math.min(640, children.length * 90));
+          const height = Math.max(160, rows * 90);
+
+          // Compute a bounding box centered inside the container position
+          const cpos = container.position();
+          const bbox = { x1: cpos.x - width/2 + 20, y1: cpos.y - height/2 + 18, x2: cpos.x + width/2 - 20, y2: cpos.y + height/2 - 18 };
+
+          try {
+            children.layout({ name: 'grid', boundingBox: bbox, avoidOverlap: true, rows, cols, animate: true, fit: false }).run();
+          } catch (e) { /* ignore */ }
+        });
+
+        // Final fit
+        cy.fit(20);
     }
 
     // Controls
