@@ -1,0 +1,154 @@
+{
+  "nodes": [
+    {
+      "id": "users",
+      "label": "Users",
+      "subtitle": "Web & Mobile",
+      "icon": "/assets/icons/users.png"
+    },
+    {
+      "id": "route53",
+      "label": "Route 53",
+      "subtitle": "DNS Management",
+      "icon": "/assets/icons/route-53-hosted-zone.png"
+    },
+    {
+      "id": "cloudfront",
+      "label": "CloudFront",
+      "subtitle": "Global CDN",
+      "icon": "/assets/icons/cloudfront-cdn.png"
+    },
+    {
+      "id": "waf",
+      "label": "AWS WAF",
+      "subtitle": "Web Application Firewall",
+      "icon": "/assets/icons/waf.png"
+    },
+    {
+      "id": "alb",
+      "label": "Application Load Balancer",
+      "subtitle": "Load Distribution",
+      "icon": "/assets/icons/alb.png"
+    },
+    {
+      "id": "vpc",
+      "label": "VPC",
+      "subtitle": "Production Environment",
+      "icon": "/assets/icons/vpc.png",
+      "type": "container"
+    },
+    {
+      "id": "eks",
+      "label": "Amazon EKS",
+      "subtitle": "Kubernetes Cluster",
+      "icon": "/assets/icons/eks.png",
+      "parentNode": "vpc"
+    },
+    {
+      "id": "rds",
+      "label": "Amazon RDS",
+      "subtitle": "PostgreSQL Database",
+      "icon": "/assets/icons/rds.png",
+      "parentNode": "vpc"
+    },
+    {
+      "id": "elasticache",
+      "label": "ElastiCache",
+      "subtitle": "Redis Cluster",
+      "icon": "/assets/icons/elasticache.png",
+      "parentNode": "vpc"
+    },
+    {
+      "id": "ecr",
+      "label": "Amazon ECR",
+      "subtitle": "Container Registry",
+      "icon": "/assets/icons/ecr-registry.png"
+    },
+    {
+      "id": "s3",
+      "label": "Amazon S3",
+      "subtitle": "Object Storage",
+      "icon": "/assets/icons/s3-storage.png"
+    },
+    {
+      "id": "secrets",
+      "label": "Secrets Manager",
+      "subtitle": "Credential Management",
+      "icon": "/assets/icons/secrets.png"
+    },
+    {
+      "id": "cloudwatch",
+      "label": "CloudWatch",
+      "subtitle": "Monitoring & Logging",
+      "icon": "/assets/icons/cloudwatch.png"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "users",
+      "target": "route53",
+      "label": "DNS queries"
+    },
+    {
+      "id": "e2",
+      "source": "route53",
+      "target": "cloudfront",
+      "label": "resolves to"
+    },
+    {
+      "id": "e3",
+      "source": "cloudfront",
+      "target": "waf",
+      "label": "security filtering"
+    },
+    {
+      "id": "e4",
+      "source": "waf",
+      "target": "alb",
+      "label": "clean traffic"
+    },
+    {
+      "id": "e5",
+      "source": "alb",
+      "target": "eks",
+      "label": "routes to"
+    },
+    {
+      "id": "e6",
+      "source": "eks",
+      "target": "rds",
+      "label": "database queries"
+    },
+    {
+      "id": "e7",
+      "source": "eks",
+      "target": "elasticache",
+      "label": "caching"
+    },
+    {
+      "id": "e8",
+      "source": "eks",
+      "target": "secrets",
+      "label": "retrieves secrets"
+    },
+    {
+      "id": "e9",
+      "source": "ecr",
+      "target": "eks",
+      "label": "container images"
+    },
+    {
+      "id": "e10",
+      "source": "eks",
+      "target": "s3",
+      "label": "file storage"
+    },
+    {
+      "id": "e11",
+      "source": "vpc",
+      "target": "cloudwatch",
+      "label": "metrics & logs"
+    }
+  ]
+}

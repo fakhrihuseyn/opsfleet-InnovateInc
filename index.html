@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Innovate Inc. Architecture Diagrams</title>
+
+  <!-- Cytoscape core + Dagre layout -->
+  <script src="https://unpkg.com/cytoscape@3.27.0/dist/cytosccript>
+  <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.jsscript src="https://unpkg.com/cytoscape-dagre@2.5.agre.js</script>
+
+  <style>
+    :root {
+      --bg: #0f1216;
+      --panel: #181d24;
+      --text: #e3e6eb;
+      --muted: #9aa3ad;
+      --accent: #4da3ff;
+      --border: #2a313a;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    .toolbar {
+      display: grid;
+      grid-template-columns: 320px 1fr auto auto auto;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    select, input[type="text"], button {
+      background: #11161c;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      border-radius: 6px;
+      outline: none;
+    }
+    button { cursor: pointer; }
+    #cy { width: 100%; height: calc(100vh - 58px); display: block; }
+    .legend { padding: 6px 10px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <select id="diagramSelect" title="Select diagram JSON">
+      <option value=".infra/innovate-high-level-architecture.json">Innovate High Level Architecture</option>
+      <option value=".infra/innovate-cicd-dataflow.json">Innovate CICD Dataflow</option>
+      <option value=".infra/innovate-eks-architecture.json">Innovate EKS Architecture</option>
+      <option value=".infra/innovate-network-architecture.json">Innovate Network Architecture</option>
+    </select>
+
+    <input id="searchBox" type="text" placeholder="Search nodes..." />
+    <button id="btnFit">Fit</button>
+    <button id="btnZoomIn">+</button>
+    <button id="btnZoomOut">−</button>
+  </div>
+
+  <div id="cy"></div>
+  <div class="legend">Tip: Click a node to focus. Drag to pan. Scroll to zoom.</div>
+
+  <script>
+    cytoscape.use(cytoscapeDagre);
+
+    const cy = cytoscape({
+      container: document.getElementById('cy'),
+      wheelSensitivity: 0.2,
+      boxSelectionEnabled: true,
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'shape': 'round-rectangle',
+            'background-color': '#131820',
+            'border-color': '#2a313a',
+            'border-width': 1,
+            'label': 'data(label)',
+            'color': '#e3e6eb',
+            'font-size': 12,
+            'text-wrap': 'wrap',
+            'text-max-width': 160,
+            'padding': '12px',
+            'width': 'label',
+            'height': 'label',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'overlay-opacity': 0,
+          }
+        },
+        {
+          selector: 'node[subtitle]',
+          style: { 'label': 'data(label) + "\\n" + data(subtitle)', 'color': '#cfd6de' }
+        },
+        {
+          selector: 'node[icon]',
+          style: {
+            'background-image': 'data(icon)',
+            'background-fit': 'contain',
+            'background-clip': 'none',
+            'background-image-crossorigin': 'anonymous',
+            'background-opacity': 1
+          }
+        },
+        {
+          /* containers: VPC, AZs, Subnets, etc. */
+          selector: 'node[group = "container"]',
+          style: {
+            'shape': 'round-rectangle',
+            'background-color': '#131820',
+            'border-color': '#4da3ff',
+            'border-width': 2,
+            'line-style': 'dashed',
+            'text-valign': 'top',
+            'text-margin-y': -8
+          }
+        },
+        {
+          selector: 'edge',
+          style: {
+            'line-color': '#3b4652',
+            'width': 2,
+            'target-arrow-shape': 'triangle',
+            'target-arrow-color': '#3b4652',
+            'curve-style': 'bezier',
+            'label': 'data(label)',
+            'font-size': 10,
+            'text-background-color': '#0f1216',
+            'text-background-opacity': 0.7,
+            'text-background-padding': 2,
+            'color': '#9aa3ad'
+          }
+        },
+        { selector: '.highlight', style: { 'border-color': '#ffd166', 'border-width': 3, 'line-color': '#ffd166', 'target-arrow-color': '#ffd166' } },
+        { selector: ':selected', style: { 'border-color': '#4da3ff', 'border-width': 3 } }
+      ]
+    });
+
+    // Dagre layout for L->R architecture flow
+    const layoutOptions = { name: 'dagre', rankDir: 'LR', nodeSep: 50, edgeSep: 20, rankSep: 80 };
+
+    const selectEl = document.getElementById('diagramSelect');
+    const searchEl = document.getElementById('searchBox');
+
+    function normalizeIconPath(icon) {
+      if (!icon) return null;
+      // Your JSON uses /icons/aws/... -> host under /assets/icons/aws/...
+      if (icon.startsWith('/icons/')) return icon.replace('/icons/', '/assets/icons/');
+      return icon;
+    }
+
+    // Create elements from your schema (supports parentNode, type=container, position.relativeTo, edges)
+    function toCytoscapeElements(json) {
+      const elements = [];
+      const containerIds = new Set();
+
+      // Build nodes
+      (json.nodes || []).forEach(n => {
+        const data = {
+          id: n.id,
+          label: n.label || n.id,
+          subtitle: n.subtitle || null,
+          icon: normalizeIconPath(n.icon),
+        };
+
+        // Mark containers
+        if (n.type === 'container') {
+          data.group = 'container';
+          containerIds.add(n.id);
+        }
+
+        // Compound parent relationship
+        if (n.parentNode) data.parent = n.parentNode;
+
+        elements.push({ data });
+
+        // Optional: nudging rank if positioned "above" a relative node (e.g., ALB above VPC)
+        if (n.position && n.position.relativeTo && n.position.side === 'above') {
+          // Dagre trick: add invisible edge from target to this node to raise rank
+          elements.push({
+            data: {
+              id: `rank-${n.id}`,
+              source: n.position.relativeTo,
+              target: n.id,
+              _rankEdge: true
+            },
+            classes: 'rank-edge'
+          });
+        }
+      });
+
+      // Build edges
+      (json.edges || []).forEach(e => {
+        const source = e.source || e.from;
+        const target = e.target || e.to;
+        if (!source || !target) return;
+        elements.push({
+          data: {
+            id: `${source}-->${target}-${Math.random().toString(36).slice(2,7)}`,
+            source, target, label: e.label || ''
+          }
+        });
+      });
+
+      return elements;
+    }
+
+    async function loadDiagram(path) {
+      const res = await fetch(path);
+      if (!res.ok) { alert(`Failed to load ${path}: ${res.status}`); return; }
+      const json = await res.json();
+      const elements = toCytoscapeElements(json);
+      cy.elements().remove();
+      cy.add(elements);
+      cy.layout(layoutOptions).run();
+      cy.fit();
+    }
+
+    // Controls
+    document.getElementById('btnFit').addEventListener('click', () => cy.fit());
+    document.getElementById('btnZoomIn').addEventListener('click', () => cy.zoom(cy.zoom() * 1.2));
+    document.getElementById('btnZoomOut').addEventListener('click', () => cy.zoom(cy.zoom() / 1.2));
+
+    // Search: highlight matching nodes
+    searchEl.addEventListener('input', () => {
+      const q = searchEl.value.trim().toLowerCase();
+      cy.elements().removeClass('highlight');
+      if (!q) return;
+      cy.nodes().forEach(n => {
+        const text = `${n.data('label') || ''} ${n.data('subtitle') || ''}`.toLowerCase();
+        if (text.includes(q)) n.addClass('highlight');
+      });
+    });
+
+    // Node click -> focus
+    cy.on('tap', 'node', (evt) => cy.fit(evt.target, 100));
+    selectEl.addEventListener('change', (evt) => loadDiagram(evt.target.value));
+
+    // Initial load
+    loadDiagram(selectEl.value);
+  </script>
+</body>
+</html>

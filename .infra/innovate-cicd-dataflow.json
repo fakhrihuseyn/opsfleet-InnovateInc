@@ -1,0 +1,212 @@
+{
+  "nodes": [
+    {
+      "id": "developer",
+      "label": "Developer",
+      "subtitle": "Code Changes",
+      "icon": "/assets/icons/developer.png"
+    },
+    {
+      "id": "git-repo",
+      "label": "Git Repository",
+      "subtitle": "Source Code",
+      "icon": "/assets/icons/git-repo.png"
+    },
+    {
+      "id": "codepipeline",
+      "label": "CodePipeline",
+      "subtitle": "CI/CD Orchestration",
+      "icon": "/assets/icons/codepipeline.png"
+    },
+    {
+      "id": "codebuild",
+      "label": "CodeBuild",
+      "subtitle": "Build & Test",
+      "icon": "/assets/icons/codebuild.png"
+    },
+    {
+      "id": "ecr-registry",
+      "label": "ECR Registry",
+      "subtitle": "Container Images",
+      "icon": "/assets/icons/ecr-registry.png"
+    },
+    {
+      "id": "argocd",
+      "label": "ArgoCD",
+      "subtitle": "GitOps Deployment",
+      "icon": "/assets/icons/argocd.png"
+    },
+    {
+      "id": "helm-charts",
+      "label": "Helm Charts",
+      "subtitle": "K8s Manifests",
+      "icon": "/assets/icons/helm-charts.png"
+    },
+    {
+      "id": "eks-target",
+      "label": "EKS Cluster",
+      "subtitle": "Production Deployment",
+      "icon": "/assets/icons/eks-target.png"
+    },
+    {
+      "id": "data-flow",
+      "label": "Data Architecture",
+      "subtitle": "Application Data Flow",
+      "type": "container"
+    },
+    {
+      "id": "users-client",
+      "label": "Web/Mobile Users",
+      "subtitle": "End Users",
+      "icon": "/assets/icons/users-client.png",
+      "parentNode": "data-flow"
+    },
+    {
+      "id": "cloudfront-cdn",
+      "label": "CloudFront CDN",
+      "subtitle": "Static Assets",
+      "icon": "/assets/icons/cloudfront-cdn.png",
+      "parentNode": "data-flow"
+    },
+    {
+      "id": "react-frontend",
+      "label": "React Frontend",
+      "subtitle": "SPA Application",
+      "icon": "/assets/icons/react-frontend.png",
+      "parentNode": "data-flow"
+    },
+    {
+      "id": "flask-api",
+      "label": "Flask API",
+      "subtitle": "REST Backend",
+      "icon": "/assets/icons/flask-api.png",
+      "parentNode": "data-flow"
+    },
+    {
+      "id": "redis-cache",
+      "label": "ElastiCache Redis",
+      "subtitle": "Session & Cache",
+      "icon": "/assets/icons/redis-cache.png",
+      "parentNode": "data-flow"
+    },
+    {
+      "id": "postgres-db",
+      "label": "RDS PostgreSQL",
+      "subtitle": "Primary Database",
+      "icon": "/assets/icons/postgres-db.png",
+      "parentNode": "data-flow"
+    },
+    {
+      "id": "s3-storage",
+      "label": "S3 Storage",
+      "subtitle": "File Storage",
+      "icon": "/assets/icons/s3-storage.png",
+      "parentNode": "data-flow"
+    },
+    {
+      "id": "cloudwatch-logs",
+      "label": "CloudWatch",
+      "subtitle": "Logging & Monitoring",
+      "icon": "/assets/icons/cloudwatch-logs.png",
+      "parentNode": "data-flow"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "developer",
+      "target": "git-repo",
+      "label": "commits code"
+    },
+    {
+      "id": "e2",
+      "source": "git-repo",
+      "target": "codepipeline",
+      "label": "triggers build"
+    },
+    {
+      "id": "e3",
+      "source": "codepipeline",
+      "target": "codebuild",
+      "label": "executes"
+    },
+    {
+      "id": "e4",
+      "source": "codebuild",
+      "target": "ecr-registry",
+      "label": "pushes images"
+    },
+    {
+      "id": "e5",
+      "source": "codebuild",
+      "target": "helm-charts",
+      "label": "updates manifests"
+    },
+    {
+      "id": "e6",
+      "source": "helm-charts",
+      "target": "argocd",
+      "label": "watches for changes"
+    },
+    {
+      "id": "e7",
+      "source": "argocd",
+      "target": "eks-target",
+      "label": "deploys to"
+    },
+    {
+      "id": "e8",
+      "source": "ecr-registry",
+      "target": "eks-target",
+      "label": "pulls images"
+    },
+    {
+      "id": "e9",
+      "source": "users-client",
+      "target": "cloudfront-cdn",
+      "label": "requests static assets"
+    },
+    {
+      "id": "e10",
+      "source": "users-client",
+      "target": "react-frontend",
+      "label": "loads application"
+    },
+    {
+      "id": "e11",
+      "source": "react-frontend",
+      "target": "flask-api",
+      "label": "API calls"
+    },
+    {
+      "id": "e12",
+      "source": "flask-api",
+      "target": "redis-cache",
+      "label": "session storage"
+    },
+    {
+      "id": "e13",
+      "source": "flask-api",
+      "target": "postgres-db",
+      "label": "data queries"
+    },
+    {
+      "id": "e14",
+      "source": "flask-api",
+      "target": "s3-storage",
+      "label": "file uploads"
+    },
+    {
+      "id": "e15",
+      "source": "flask-api",
+      "target": "cloudwatch-logs",
+      "label": "application logs"
+    },
+    {
+      "id": "e16",
+      "source": "cloudfront-cdn",
+      "target": "s3-storage",
+      "label": "serves from"
+    }
+  ]
+}

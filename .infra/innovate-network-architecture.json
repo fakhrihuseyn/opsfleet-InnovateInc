@@ -1,0 +1,263 @@
+{
+  "nodes": [
+    {
+      "id": "igw",
+      "label": "Internet Gateway",
+      "subtitle": "Public Internet Access",
+      "icon": "/assets/icons/igw.png"
+    },
+    {
+      "id": "vpc-main",
+      "label": "Production VPC",
+      "subtitle": "10.0.0.0/16",
+      "icon": "/assets/icons/vpc-main.png",
+      "type": "container"
+    },
+    {
+      "id": "az-1a",
+      "label": "Availability Zone",
+      "subtitle": "us-east-1a",
+      "icon": "/assets/icons/az-1a.png",
+      "type": "container",
+      "parentNode": "vpc-main",
+      "layout": "column"
+    },
+    {
+      "id": "az-1b",
+      "label": "Availability Zone",
+      "subtitle": "us-east-1b",
+      "icon": "/assets/icons/az-1b.png",
+      "type": "container",
+      "parentNode": "vpc-main",
+      "layout": "column"
+    },
+    {
+      "id": "az-1c",
+      "label": "Availability Zone",
+      "subtitle": "us-east-1c",
+      "icon": "/assets/icons/az-1c.png",
+      "type": "container",
+      "parentNode": "vpc-main",
+      "layout": "column"
+    },
+    {
+      "id": "pub-1a",
+      "label": "Public Subnet",
+      "subtitle": "10.0.1.0/24",
+      "icon": "/assets/icons/pub-1a.png",
+      "type": "container",
+      "parentNode": "az-1a"
+    },
+    {
+      "id": "priv-1a",
+      "label": "Private Subnet",
+      "subtitle": "10.0.11.0/24",
+      "icon": "/assets/icons/priv-1a.png",
+      "type": "container",
+      "parentNode": "az-1a"
+    },
+    {
+      "id": "db-1a",
+      "label": "Database Subnet",
+      "subtitle": "10.0.21.0/24",
+      "icon": "/assets/icons/db-1a.png",
+      "type": "container",
+      "parentNode": "az-1a"
+    },
+    {
+      "id": "pub-1b",
+      "label": "Public Subnet",
+      "subtitle": "10.0.2.0/24",
+      "icon": "/assets/icons/pub-1b.png",
+      "type": "container",
+      "parentNode": "az-1b"
+    },
+    {
+      "id": "priv-1b",
+      "label": "Private Subnet",
+      "subtitle": "10.0.12.0/24",
+      "icon": "/assets/icons/priv-1b.png",
+      "type": "container",
+      "parentNode": "az-1b"
+    },
+    {
+      "id": "db-1b",
+      "label": "Database Subnet",
+      "subtitle": "10.0.22.0/24",
+      "icon": "/assets/icons/db-1b.png",
+      "type": "container",
+      "parentNode": "az-1b"
+    },
+    {
+      "id": "pub-1c",
+      "label": "Public Subnet",
+      "subtitle": "10.0.3.0/24",
+      "icon": "/assets/icons/pub-1c.png",
+      "type": "container",
+      "parentNode": "az-1c"
+    },
+    {
+      "id": "priv-1c",
+      "label": "Private Subnet",
+      "subtitle": "10.0.13.0/24",
+      "icon": "/assets/icons/priv-1c.png",
+      "type": "container",
+      "parentNode": "az-1c"
+    },
+    {
+      "id": "db-1c",
+      "label": "Database Subnet",
+      "subtitle": "10.0.23.0/24",
+      "icon": "/assets/icons/db-1c.png",
+      "type": "container",
+      "parentNode": "az-1c"
+    },
+    {
+      "id": "nat-1a",
+      "label": "NAT Gateway",
+      "subtitle": "NAT-1A",
+      "icon": "/assets/icons/nat-1a.png",
+      "parentNode": "pub-1a"
+    },
+    {
+      "id": "nat-1b",
+      "label": "NAT Gateway",
+      "subtitle": "NAT-1B",
+      "icon": "/assets/icons/nat-1b.png",
+      "parentNode": "pub-1b"
+    },
+    {
+      "id": "nat-1c",
+      "label": "NAT Gateway",
+      "subtitle": "NAT-1C",
+      "icon": "/assets/icons/nat-1c.png",
+      "parentNode": "pub-1c"
+    },
+    {
+      "id": "alb-main",
+      "label": "Application Load Balancer",
+      "subtitle": "Multi-AZ Distribution",
+      "icon": "/assets/icons/alb-main.png",
+      "position": {
+        "relativeTo": "vpc-main",
+        "side": "above"
+      }
+    },
+    {
+      "id": "eks-node-1a",
+      "label": "EKS Worker Nodes",
+      "subtitle": "Auto Scaling",
+      "icon": "/assets/icons/eks-node-1a.png",
+      "parentNode": "priv-1a"
+    },
+    {
+      "id": "eks-node-1b",
+      "label": "EKS Worker Nodes",
+      "subtitle": "Auto Scaling",
+      "icon": "/assets/icons/eks-node-1b.png",
+      "parentNode": "priv-1b"
+    },
+    {
+      "id": "eks-node-1c",
+      "label": "EKS Worker Nodes",
+      "subtitle": "Auto Scaling",
+      "icon": "/assets/icons/eks-node-1c.png",
+      "parentNode": "priv-1c"
+    },
+    {
+      "id": "rds-primary",
+      "label": "RDS Primary",
+      "subtitle": "PostgreSQL",
+      "icon": "/assets/icons/rds-primary.png",
+      "parentNode": "db-1a"
+    },
+    {
+      "id": "rds-standby",
+      "label": "RDS Standby",
+      "subtitle": "Synchronous",
+      "icon": "/assets/icons/rds-standby.png",
+      "parentNode": "db-1b"
+    },
+    {
+      "id": "rds-replica",
+      "label": "Read Replica",
+      "subtitle": "Performance",
+      "icon": "/assets/icons/rds-replica.png",
+      "parentNode": "db-1c"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "igw",
+      "target": "alb-main",
+      "label": "internet traffic"
+    },
+    {
+      "id": "e2",
+      "source": "alb-main",
+      "target": "eks-node-1a",
+      "label": "distributes to"
+    },
+    {
+      "id": "e3",
+      "source": "alb-main",
+      "target": "eks-node-1b",
+      "label": "distributes to"
+    },
+    {
+      "id": "e4",
+      "source": "alb-main",
+      "target": "eks-node-1c",
+      "label": "distributes to"
+    },
+    {
+      "id": "e5",
+      "source": "eks-node-1a",
+      "target": "rds-primary",
+      "label": "queries"
+    },
+    {
+      "id": "e6",
+      "source": "eks-node-1b",
+      "target": "rds-primary",
+      "label": "queries"
+    },
+    {
+      "id": "e7",
+      "source": "eks-node-1c",
+      "target": "rds-replica",
+      "label": "reads from"
+    },
+    {
+      "id": "e8",
+      "source": "rds-primary",
+      "target": "rds-standby",
+      "label": "synchronous replication"
+    },
+    {
+      "id": "e9",
+      "source": "rds-primary",
+      "target": "rds-replica",
+      "label": "asynchronous replication"
+    },
+    {
+      "id": "e10",
+      "source": "priv-1a",
+      "target": "nat-1a",
+      "label": "outbound via"
+    },
+    {
+      "id": "e11",
+      "source": "priv-1b",
+      "target": "nat-1b",
+      "label": "outbound via"
+    },
+    {
+      "id": "e12",
+      "source": "priv-1c",
+      "target": "nat-1c",
+      "label": "outbound via"
+    }
+  ]
+}

@@ -1,0 +1,219 @@
+{
+  "nodes": [
+    {
+      "id": "eks-cluster",
+      "label": "EKS Cluster",
+      "subtitle": "innovate-prod",
+      "icon": "/assets/icons/eks-cluster.png",
+      "type": "container"
+    },
+    {
+      "id": "ns-prod",
+      "label": "Production Namespace",
+      "subtitle": "innovate-prod",
+      "type": "container",
+      "parentNode": "eks-cluster",
+      "layout": "row"
+    },
+    {
+      "id": "ns-monitoring",
+      "label": "Monitoring Namespace",
+      "subtitle": "monitoring",
+      "type": "container",
+      "parentNode": "eks-cluster",
+      "layout": "row"
+    },
+    {
+      "id": "ns-system",
+      "label": "System Namespace",
+      "subtitle": "kube-system",
+      "type": "container",
+      "parentNode": "eks-cluster",
+      "layout": "row"
+    },
+    {
+      "id": "ingress",
+      "label": "AWS Load Balancer Controller",
+      "subtitle": "Ingress Controller",
+      "icon": "/assets/icons/ingress.png",
+      "parentNode": "ns-system"
+    },
+    {
+      "id": "backend-deploy",
+      "label": "Backend Deployment",
+      "subtitle": "Flask API",
+      "icon": "/assets/icons/backend-deploy.png",
+      "parentNode": "ns-prod"
+    },
+    {
+      "id": "frontend-deploy",
+      "label": "Frontend Deployment",
+      "subtitle": "React SPA",
+      "icon": "/assets/icons/frontend-deploy.png",
+      "parentNode": "ns-prod"
+    },
+    {
+      "id": "worker-deploy",
+      "label": "Worker Deployment",
+      "subtitle": "Background Jobs",
+      "icon": "/assets/icons/worker-deploy.png",
+      "parentNode": "ns-prod"
+    },
+    {
+      "id": "backend-svc",
+      "label": "Backend Service",
+      "subtitle": "ClusterIP",
+      "icon": "/assets/icons/backend-svc.png",
+      "parentNode": "ns-prod"
+    },
+    {
+      "id": "frontend-svc",
+      "label": "Frontend Service",
+      "subtitle": "ClusterIP",
+      "icon": "/assets/icons/frontend-svc.png",
+      "parentNode": "ns-prod"
+    },
+    {
+      "id": "redis-svc",
+      "label": "Redis Service",
+      "subtitle": "External Service",
+      "icon": "/assets/icons/redis-svc.png",
+      "parentNode": "ns-prod"
+    },
+    {
+      "id": "db-secret",
+      "label": "Database Secret",
+      "subtitle": "RDS Credentials",
+      "icon": "/assets/icons/db-secret.png",
+      "parentNode": "ns-prod"
+    },
+    {
+      "id": "app-config",
+      "label": "App ConfigMap",
+      "subtitle": "Environment Config",
+      "icon": "/assets/icons/app-config.png",
+      "parentNode": "ns-prod"
+    },
+    {
+      "id": "prometheus",
+      "label": "Prometheus",
+      "subtitle": "Metrics Collection",
+      "icon": "/assets/icons/prometheus.png",
+      "parentNode": "ns-monitoring"
+    },
+    {
+      "id": "grafana",
+      "label": "Grafana",
+      "subtitle": "Dashboards",
+      "icon": "/assets/icons/grafana.png",
+      "parentNode": "ns-monitoring"
+    },
+    {
+      "id": "fluentbit",
+      "label": "Fluent Bit",
+      "subtitle": "Log Collection",
+      "icon": "/assets/icons/fluentbit.png",
+      "parentNode": "ns-monitoring"
+    },
+    {
+      "id": "cluster-autoscaler",
+      "label": "Cluster Autoscaler",
+      "subtitle": "Node Scaling",
+      "icon": "/assets/icons/cluster-autoscaler.png",
+      "parentNode": "ns-system"
+    },
+    {
+      "id": "external-dns",
+      "label": "External DNS",
+      "subtitle": "DNS Management",
+      "icon": "/assets/icons/external-dns.png",
+      "parentNode": "ns-system"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "ingress",
+      "target": "frontend-svc",
+      "label": "routes traffic"
+    },
+    {
+      "id": "e2",
+      "source": "ingress",
+      "target": "backend-svc",
+      "label": "routes API calls"
+    },
+    {
+      "id": "e3",
+      "source": "frontend-svc",
+      "target": "frontend-deploy",
+      "label": "load balances"
+    },
+    {
+      "id": "e4",
+      "source": "backend-svc",
+      "target": "backend-deploy",
+      "label": "load balances"
+    },
+    {
+      "id": "e5",
+      "source": "backend-deploy",
+      "target": "db-secret",
+      "label": "uses credentials"
+    },
+    {
+      "id": "e6",
+      "source": "backend-deploy",
+      "target": "app-config",
+      "label": "reads config"
+    },
+    {
+      "id": "e7",
+      "source": "frontend-deploy",
+      "target": "app-config",
+      "label": "reads config"
+    },
+    {
+      "id": "e8",
+      "source": "worker-deploy",
+      "target": "redis-svc",
+      "label": "processes jobs"
+    },
+    {
+      "id": "e9",
+      "source": "backend-deploy",
+      "target": "redis-svc",
+      "label": "queues jobs"
+    },
+    {
+      "id": "e10",
+      "source": "prometheus",
+      "target": "backend-deploy",
+      "label": "scrapes metrics"
+    },
+    {
+      "id": "e11",
+      "source": "prometheus",
+      "target": "frontend-deploy",
+      "label": "scrapes metrics"
+    },
+    {
+      "id": "e12",
+      "source": "grafana",
+      "target": "prometheus",
+      "label": "queries data"
+    },
+    {
+      "id": "e13",
+      "source": "fluentbit",
+      "target": "backend-deploy",
+      "label": "collects logs"
+    },
+    {
+      "id": "e14",
+      "source": "cluster-autoscaler",
+      "target": "backend-deploy",
+      "label": "scales nodes for"
+    }
+  ]
+}
