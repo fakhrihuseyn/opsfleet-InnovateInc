@@ -1,6 +1,6 @@
 <img src="image.png" alt="alt text" style="max-width:480px; width:10%; height:auto; display:block; margin:12px 0;" /> 
 
-# Opsfleet-InnovateInc 
+# Opsfleet-InnovateInc
 
 Innovate Inc. - Web Application Platform
 
