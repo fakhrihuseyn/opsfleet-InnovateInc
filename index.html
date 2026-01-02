@@ -81,11 +81,18 @@
           style: {
             'background-image': 'data(icon)',
             'background-fit': 'contain',
-            'background-width': '48px',
-            'background-height': '48px',
+            'background-width': '64px',
+            'background-height': '64px',
             'background-clip': 'none',
             'background-image-crossorigin': 'anonymous',
             'background-opacity': 1
+          ,
+            // size controlled via data so diagrams can tune icon node dimensions
+            'width': 'data(width)',
+            'height': 'data(height)',
+            'padding': 6,
+            'text-valign': 'bottom',
+            'text-margin-y': 8
           }
         },
         {
@@ -109,9 +116,9 @@
             'text-valign': 'top',
             'text-margin-y': -8,
             'font-size': 16,
-            // containers should auto-size to their children: don't force fixed width/height
-            'width': 'auto',
-            'height': 'auto',
+            // containers sized from data so we can programmatically enclose children
+            'width': 'data(width)',
+            'height': 'data(height)',
             // containers should not show the large icon background (keeps child icons readable)
             'background-image': 'none',
             'padding': 18
@@ -141,6 +148,48 @@
 
     // Dagre layout for L->R architecture flow
     const layoutOptions = { name: 'dagre', rankDir: 'LR', nodeSep: 220, edgeSep: 60, rankSep: 260 };
+
+    // Per-diagram visual configuration (presets, node sizes, layout tweaks)
+    const diagramConfigs = {
+      'innovate-cicd-dataflow.json': {
+        layoutOptions: { nodeSep: 200, rankSep: 220 },
+        nodeSize: { width: 110, height: 110 },
+        containerDefault: { width: 480, height: 300 },
+        presets: {
+          'data-flow': { cols: 2, rows: 3, width: 420 }
+        }
+      },
+      'innovate-eks-architecture.json': {
+        layoutOptions: { nodeSep: 220, rankSep: 300 },
+        nodeSize: { width: 130, height: 130 },
+        containerDefault: { width: 620, height: 420 },
+        presets: {
+          'eks-cluster': { cols: 1, rows: 1, width: 620 },
+          'ns-monitoring': { cols: 3, rows: 1, width: 520 },
+          'ns-prod': { cols: 3, rows: 3, width: 640 },
+          'ns-system': { cols: 1, rows: 3, width: 200 }
+        }
+      },
+      'innovate-high-level-architecture.json': {
+        layoutOptions: { nodeSep: 300, rankSep: 360 },
+        nodeSize: { width: 160, height: 160 },
+        containerDefault: { width: 720, height: 420 },
+        presets: {
+          'vpc': { cols: 2, rows: 2, width: 560 }
+        }
+      },
+      'innovate-network-architecture.json': {
+        layoutOptions: { nodeSep: 180, rankSep: 240 },
+        nodeSize: { width: 120, height: 120 },
+        containerDefault: { width: 720, height: 420 },
+        presets: {
+          'vpc-main': { cols: 2, rows: 4, width: 720 },
+          'az-1a': { cols: 1, rows: 3, width: 200 },
+          'az-1b': { cols: 1, rows: 3, width: 200 },
+          'az-1c': { cols: 1, rows: 3, width: 200 }
+        }
+      }
+    };
 
     const selectEl = document.getElementById('diagramSelect');
     const searchEl = document.getElementById('searchBox');
@@ -251,8 +300,18 @@
       cy.elements().remove();
         cy.add(elements);
 
-        // Two-stage layout:
-        // 1) Run Dagre on top-level nodes (those without a parent) so global flow is left->right.
+        // apply per-diagram visual config (node sizes, container defaults)
+        const diagramKey = path.split('/').pop();
+        const dcfg = diagramConfigs[diagramKey] || {};
+        const localLayoutOptions = Object.assign({}, layoutOptions, dcfg.layoutOptions || {});
+
+        // set icon node sizes from config
+        const iconSize = (dcfg.nodeSize) ? dcfg.nodeSize : { width: 120, height: 120 };
+        cy.nodes('[icon]').forEach(n => { n.data('width', n.data('width') || iconSize.width); n.data('height', n.data('height') || iconSize.height); });
+        // initialize container default sizes
+        cy.nodes('.container').forEach(c => { const def = dcfg.containerDefault || { width: 360, height: 240 }; c.data('width', c.data('width') || def.width); c.data('height', c.data('height') || def.height); });
+
+        // Two-stage layout: use diagram-specific layout options when available
         const topLevelEles = cy.elements().filter(ele => {
           if (ele.isEdge()) {
             const src = cy.getElementById(ele.data('source'));
@@ -264,36 +323,15 @@
         });
 
         await (async () => {
-          const dagreLayout = cy.layout(Object.assign({}, layoutOptions, { animate: true, fit: false, boundingBox: undefined, name: 'dagre' }));
+          const dagreLayout = cy.layout(Object.assign({}, localLayoutOptions, { animate: true, fit: false, boundingBox: undefined, name: 'dagre' }));
           try { dagreLayout.run(); } catch (e) { /* ignore layout errors */ }
           // give layout a moment
           await new Promise(r => setTimeout(r, 250));
         })();
 
         // 2) For each container, layout children inside a grid to make them tidy
-        // Use per-diagram presets to tune rows/cols/width for specific containers
-        const diagramKey = path.split('/').pop();
-        const presets = {
-          'innovate-cicd-dataflow.json': {
-            'data-flow': { cols: 2, rows: 3, width: 420 },
-            // smaller grouped containers
-          },
-          'innovate-eks-architecture.json': {
-            'eks-cluster': { cols: 1, rows: 1, width: 620 },
-            'ns-monitoring': { cols: 3, rows: 1, width: 520 },
-            'ns-prod': { cols: 3, rows: 3, width: 640 },
-            'ns-system': { cols: 1, rows: 3, width: 200 }
-          },
-          'innovate-high-level-architecture.json': {
-            'vpc': { cols: 2, rows: 3, width: 420 }
-          },
-          'innovate-network-architecture.json': {
-            'vpc-main': { cols: 2, rows: 4, width: 720 },
-            'az-1a': { cols: 1, rows: 3, width: 200 },
-            'az-1b': { cols: 1, rows: 3, width: 200 },
-            'az-1c': { cols: 1, rows: 3, width: 200 }
-          }
-        };
+        // Use per-diagram presets from the diagram config
+        const presets = dcfg.presets || {};
 
         // Use an async for-loop so we can await between layout steps and avoid JS syntax errors
         const containers = cy.nodes('.container').toArray();
@@ -302,7 +340,7 @@
           if (children.length === 0) continue;
 
           // pick preset if available
-          const cfg = (presets[diagramKey] && presets[diagramKey][container.id()]) || {};
+          const cfg = presets[container.id()] || {};
           const cols = cfg.cols || Math.min(4, children.length) || 1;
           const rows = cfg.rows || Math.max(1, Math.ceil(children.length / cols));
           // wider cell sizes to avoid overlap between icons and labels
@@ -314,14 +352,22 @@
           const bbox = { x1: cpos.x - width/2 + 20, y1: cpos.y - height/2 + 18, x2: cpos.x + width/2 - 20, y2: cpos.y + height/2 - 18 };
 
           try {
-            children.layout({ name: 'grid', boundingBox: bbox, avoidOverlap: true, avoidOverlapPadding: 60, spacingFactor: 2.2, rows, cols, animate: true, fit: false }).run();
-            // after children are placed, compute their bounding box and center the container on them
+            // deterministic cell placement for children
+            const cellW = (bbox.x2 - bbox.x1) / cols;
+            const cellH = (bbox.y2 - bbox.y1) / rows;
+            const arr = children.toArray().sort((a, b) => ('' + a.id()).localeCompare(b.id()));
+            arr.forEach((child, idx) => {
+              const r = Math.floor(idx / cols);
+              const c = idx % cols;
+              const x = bbox.x1 + c * cellW + cellW / 2;
+              const y = bbox.y1 + r * cellH + cellH / 2;
+              child.position({ x, y });
+            });
             await new Promise(r => setTimeout(r, 120));
             const childBB = children.boundingBox({ includeNodes: true });
             if (childBB && Number.isFinite(childBB.x1)) {
               const cx = (childBB.x1 + childBB.x2) / 2;
               const cyPos = (childBB.y1 + childBB.y2) / 2;
-              // move the container to center of children so its border fits nicely
               container.position({ x: cx, y: cyPos });
             }
           } catch (e) { /* ignore */ }
@@ -336,31 +382,60 @@
     // Fit now re-runs the tidy layout (dagre + per-container grid) to prevent overlapping icons
     async function tidyLayout() {
       try {
-        const dagreLayout = cy.layout(Object.assign({}, layoutOptions, { animate: true, fit: false, boundingBox: undefined, name: 'dagre' }));
+        // use diagram-specific layout options
+        const path = selectEl.value;
+        const diagramKey = path.split('/').pop();
+        const dcfg = diagramConfigs[diagramKey] || {};
+        const localLayoutOptions = Object.assign({}, layoutOptions, dcfg.layoutOptions || {});
+        const dagreLayout = cy.layout(Object.assign({}, localLayoutOptions, { animate: true, fit: false, boundingBox: undefined, name: 'dagre' }));
         dagreLayout.run();
         await new Promise(r => setTimeout(r, 220));
 
-        // reuse presets from loadDiagram
-        const path = selectEl.value;
-        const diagramKey = path.split('/').pop();
-        const presets = {
-          'innovate-cicd-dataflow.json': { 'data-flow': { cols: 2, rows: 3, width: 420 } },
-          'innovate-eks-architecture.json': { 'eks-cluster': { cols: 1, rows: 1, width: 620 }, 'ns-monitoring': { cols: 3, rows: 1, width: 520 }, 'ns-prod': { cols: 3, rows: 3, width: 640 }, 'ns-system': { cols: 1, rows: 3, width: 200 } },
-          'innovate-high-level-architecture.json': { 'vpc': { cols: 2, rows: 3, width: 420 } },
-          'innovate-network-architecture.json': { 'vpc-main': { cols: 2, rows: 4, width: 720 }, 'az-1a': { cols: 1, rows: 3, width: 200 }, 'az-1b': { cols: 1, rows: 3, width: 200 }, 'az-1c': { cols: 1, rows: 3, width: 200 } }
-        };
+        // per-diagram presets
+        const presets = dcfg.presets || {};
 
         cy.nodes('.container').forEach(container => {
           const children = cy.nodes().filter(n => n.data('parent') === container.id());
           if (children.length === 0) return;
-          const cfg = (presets[diagramKey] && presets[diagramKey][container.id()]) || {};
+          const cfg = presets[container.id()] || {};
           const cols = cfg.cols || Math.min(4, children.length) || 1;
           const rows = cfg.rows || Math.max(1, Math.ceil(children.length / cols));
           const width = cfg.width || Math.max(300, Math.min(1400, children.length * 160));
           const height = Math.max(240, rows * 160);
           const cpos = container.position();
           const bbox = { x1: cpos.x - width/2 + 20, y1: cpos.y - height/2 + 18, x2: cpos.x + width/2 - 20, y2: cpos.y + height/2 - 18 };
-          try { children.layout({ name: 'grid', boundingBox: bbox, avoidOverlap: true, avoidOverlapPadding: 40, spacingFactor: 1.6, rows, cols, animate: true, fit: false }).run(); } catch (e) { /* ignore */ }
+          try {
+            // deterministic explicit placement
+            const cellW = (bbox.x2 - bbox.x1) / cols;
+            const cellH = (bbox.y2 - bbox.y1) / rows;
+            const arr = children.toArray().sort((a, b) => ('' + a.id()).localeCompare(b.id()));
+            arr.forEach((child, idx) => {
+              const r = Math.floor(idx / cols);
+              const c = idx % cols;
+              const x = bbox.x1 + c * cellW + cellW / 2;
+              const y = bbox.y1 + r * cellH + cellH / 2;
+              child.position({ x, y });
+            });
+          } catch (e) { /* ignore */ }
+        });
+
+        // allow settle then resize containers
+        await new Promise(r => setTimeout(r, 160));
+        cy.nodes('.container').forEach(container => {
+          const children = cy.nodes().filter(n => n.data('parent') === container.id());
+          if (children.length === 0) return;
+          const childBB = children.boundingBox({ includeNodes: true });
+          if (childBB && Number.isFinite(childBB.x1)) {
+            const cx = (childBB.x1 + childBB.x2) / 2;
+            const cyPos = (childBB.y1 + childBB.y2) / 2;
+            const paddingX = 48;
+            const paddingY = 72;
+            const newW = Math.max(220, (childBB.x2 - childBB.x1) + paddingX);
+            const newH = Math.max(180, (childBB.y2 - childBB.y1) + paddingY);
+            container.data('width', newW);
+            container.data('height', newH);
+            container.position({ x: cx, y: cyPos });
+          }
         });
       } catch (e) { console.warn('tidyLayout failed', e); }
     }
