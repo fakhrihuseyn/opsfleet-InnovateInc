@@ -28,6 +28,6 @@ Run locally
 python3 -m http.server 8000
 ```
 
-3. Open ```http://localhost:8000``` in your browser and choose a diagram from the toolbar.
+3. Open ```[http://localhost:8000](http://localhost:8000)``` in your browser and choose a diagram from the toolbar.
 
 
