@@ -20,17 +20,14 @@ Viewer features:
 - Per-diagram presets are available in the viewer for visual tuning (see `diagramConfigs` inside `index.html`).
 
 Run locally
+1. Download repository to your local
 
-1. Start a simple static server in the repository root:
+2. Start a simple static server in the repository root:
 
 ```bash
 python3 -m http.server 8000
 ```
 
-2. Open http://localhost:8000 in your browser and choose a diagram from the toolbar.
+3. Open ```http://localhost:8000``` in your browser and choose a diagram from the toolbar.
 
-Notes & tips
 
-- To tweak node label font sizes or connector label sizes edit the Cytoscape style in `index.html` (look for `selector: 'node'`, `selector: 'node[icon]'` and `selector: 'edge'`).
-- To tune per-diagram layout options open the `diagramConfigs` object in `index.html` and adjust `layoutOptions`, `nodeSize`, and `presets`.
-- If you want me to swap icon fallbacks or fetch official brand SVGs (Helm/ArgoCD), say so and I will update `assets/icons/` from a reliable CDN.
