@@ -1,13 +1,15 @@
 :root {
   --bg: #1e1f20; /* soft light gray background */
   --panel: #1b1b1b; /* slightly darker panel for toolbar */
-  --text: #f1f1f1; /* dark text for readability on light bg */
-  --muted: #ffffff; /* gray for muted labels and borders */
-  --accent: #dbec98; /* accent blue */
-  --border: #5f5f5f; /* soft border */
-  --edge: #ffffff; /* default connector color */
-  --highlight: #000000; /* highlight color for search/hover */
+  --text: #f1f1f1; /* main text color */
+  --muted: #ffffff; /* muted labels and borders */
+  --brand: #d0d0d0; /* light gray for brand label */
+  --accent: #dbec98;
+  --border: #5f5f5f;
+  --edge: #ffffff;
+  --highlight: #000000;
   --dot: rgba(0,0,0,0.03);
+  --toolbar-height: 64px;
 }
 
 html, body {
@@ -16,21 +18,38 @@ html, body {
   background: var(--bg);
   color: var(--text);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  /* page background is plain; dotted decoration moved to container frames */
 }
 
 .toolbar {
-  display: grid;
-  grid-template-columns: 320px 1fr auto auto auto auto;
-  gap: 8px;
+  display: flex;
   align-items: center;
-  padding: 10px;
+  gap: 12px;
+  padding: 20px;
+  height: var(--toolbar-height);
   border-bottom: 1px solid var(--border);
   background: var(--panel);
   position: sticky;
   top: 0;
   z-index: 10;
 }
+
+.brand {
+  color: var(--brand);
+  font-weight: 600;
+  font-size: 25px;
+  padding-left: 8px;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.controls select { min-width: 220px; }
+.controls input[type="text"] { flex: 1 1 180px; min-width: 120px; }
 
 select, input[type="text"], button {
   background: var(--panel);
@@ -43,11 +62,71 @@ select, input[type="text"], button {
 
 button { cursor: pointer; }
 
-#cy { width: 100%; height: calc(100vh - 58px); display: block; }
-.legend { padding: 6px 10px; color: var(--muted); font-size: 12px; }
+#cy { width: 100%; height: calc(100vh - var(--toolbar-height)); display: block; }
+.legend { padding: 8px 12px; color: var(--muted); font-size: 12px; position: fixed; right: 12px; bottom: 12px; background: rgba(27,27,27,0.85); border-radius: 8px; border: 1px solid rgba(255,255,255,0.04); z-index: 50; }
+
+/* Tooltip for node hover */
+#tooltip {
+  position: fixed;
+  pointer-events: none;
+  background: rgba(0,0,0,0.75);
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  z-index: 9999;
+  display: none;
+  white-space: pre-line;
+}
+
+/* Architecture design side panel */
+.design-panel {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--toolbar-height) + 8px);
+  transform: translateX(-50%) scaleY(0);
+  transform-origin: top center;
+  width: 860px;
+  max-width: 96vw;
+  max-height: calc(80vh);
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.04);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+  transition: transform 180ms ease, opacity 160ms ease;
+  z-index: 1200;
+  overflow: auto;
+  padding: 18px;
+  opacity: 0;
+}
+.design-panel.open { transform: translateX(-50%) scaleY(1); opacity: 1; }
+.design-panel .title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+.design-panel .close { position: absolute; left: 12px; top: 12px; background: transparent; border: none; color: var(--muted); cursor: pointer; }
+.design-panel .content { margin-top: 12px; line-height: 1.45; }
+
+.toolbar button#btnDesign { background: transparent; border: 1px solid var(--border); color: var(--brand); padding: 6px 10px; border-radius: 6px; }
+
+/* center button positioning */
+.toolbar { position: relative; }
+.toolbar .center-group {
+  position: absolute;
+  left: 50%;
+  top: 82%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 8px;
+  z-index: 30;
+}
+.toolbar .center-group .center-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--brand);
+  padding: 8px 12px;
+  border-radius: 8px;
+}
 
 /* Node / icon styling */
-.node-label { font-size: 16px; color: var(--text); }
+.node-label { font-size: 19.2px; color: var(--text); }
 
 /* Scale control styles moved from inline attributes */
 .scale-label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }

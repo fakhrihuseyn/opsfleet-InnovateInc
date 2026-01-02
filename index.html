@@ -13,6 +13,12 @@
 </head>
 <body>
   <div class="toolbar">
+    <div class="brand">InnovateInc</div>
+    <div class="center-group">
+      <button id="btnDesign" class="center-btn" title="Show architecture design">Architecture Design</button>
+      <button id="btnFit" class="center-btn" title="Fit visible elements">Fit Elements</button>
+    </div>
+    <div class="controls">
     <select id="diagramSelect" title="Select diagram JSON">
       <option value=".infra/innovate-high-level-architecture.json">Innovate High Level Architecture</option>
       <option value=".infra/innovate-cicd-dataflow.json">Innovate CICD Dataflow</option>
@@ -26,15 +32,30 @@
       <input id="scalePercent" class="scale-input" type="number" min="10" max="200" value="95" title="Scale percent applied after fit">
       <span class="scale-unit">%</span>
     </label>
-    <button id="btnFit">Fit</button>
+    
     <button id="btnZoomIn">+</button>
     <button id="btnZoomOut">−</button>
+    </div>
   </div>
 
   <div id="cy"></div>
-  <div class="legend">Tip: Click a node to focus. Drag to pan. Scroll to zoom.</div>
+    <div class="legend">Designed for 'Opsfleet' DevOps team | designed By Fakhri Huseynov 2026®</div>
+    <div id="tooltip" aria-hidden="true"></div>
+    <aside id="designPanel" class="design-panel" aria-hidden="true">
+      <div class="title">Architecture Design</div>
+      <div class="content" id="designContent">Loading...</div>
+    </aside>
 
   <script>
+  // Markdown renderer (marked) loaded from CDN for client-side rendering of ARCHITECTURE_DESIGN.md
+  // if blocked, the panel will show raw markdown as fallback
+  (function loadMarked(){
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+    s.crossOrigin = 'anonymous';
+    s.defer = true;
+    document.head.appendChild(s);
+  })();
     cytoscape.use(cytoscapeDagre);
 
     // Read colors from CSS variables so all color values live in style.css
@@ -64,7 +85,7 @@
             'border-width': 1,
             'label': 'data(display)',
             'color': colors.text,
-            'font-size': 16,
+            'font-size': 19.2,
             'text-wrap': 'wrap',
             'text-max-width': 140,
             'padding': 12,
@@ -81,18 +102,22 @@
           style: {
             'background-image': 'data(icon)',
             'background-fit': 'contain',
-            'background-width': '64px',
-            'background-height': '64px',
+            'background-width': '76px',
+            'background-height': '76px',
             'background-clip': 'none',
             'background-image-crossorigin': 'anonymous',
             'background-opacity': 1
           ,
-            // size controlled via data so diagrams can tune icon node dimensions
+            // rounded frame + size controlled via data so diagrams can tune icon node dimensions
+            'shape': 'round-rectangle',
+            'border-width': 2,
+            'border-color': colors.border,
             'width': 'data(width)',
             'height': 'data(height)',
-            'padding': 6,
+            'padding': 8,
             'text-valign': 'bottom',
-            'text-margin-y': 8
+            'text-margin-y': 8,
+            'font-size': 19.2
           }
         },
         {
@@ -133,10 +158,12 @@
             'target-arrow-color': colors.edge,
             'curve-style': 'bezier',
             'label': 'data(label)',
-            'font-size': 10,
+            'font-size': 14,
+            'text-outline-color': colors.bg,
+            'text-outline-width': 4,
             'text-background-color': colors.bg,
-            'text-background-opacity': 0.7,
-            'text-background-padding': 2,
+            'text-background-opacity': 0.85,
+            'text-background-padding': 4,
             'color': colors.muted
           }
         },
@@ -300,14 +327,48 @@
       cy.elements().remove();
         cy.add(elements);
 
+        // Ensure icon paths actually load; if an SVG path 404s, try PNG fallback
+        async function ensureIconPaths() {
+          const nodesWithIcon = cy.nodes('[icon]').toArray();
+          const checked = new Set();
+          for (const n of nodesWithIcon) {
+            const icon = n.data('icon');
+            if (!icon || checked.has(icon)) continue;
+            checked.add(icon);
+            try {
+              const r = await fetch(icon, { method: 'GET' });
+              if (!r.ok) {
+                // try replacing .svg with .png as fallback
+                if (icon.endsWith('.svg')) {
+                  const alt = icon.replace(/\.svg$/, '.png');
+                  try {
+                    const r2 = await fetch(alt, { method: 'GET' });
+                    if (r2.ok) {
+                      // update all nodes referencing the failed icon
+                      cy.nodes(`[icon="${icon}"]`).forEach(x => x.data('icon', alt));
+                    }
+                  } catch (e) { /* ignore */ }
+                }
+              }
+            } catch (e) { /* ignore network errors */ }
+          }
+        }
+        // run but don't block layout too long
+        ensureIconPaths().catch(() => {});
+
         // apply per-diagram visual config (node sizes, container defaults)
         const diagramKey = path.split('/').pop();
         const dcfg = diagramConfigs[diagramKey] || {};
         const localLayoutOptions = Object.assign({}, layoutOptions, dcfg.layoutOptions || {});
 
-        // set icon node sizes from config
+        // set icon node sizes from config and increase by 20% for better visibility
         const iconSize = (dcfg.nodeSize) ? dcfg.nodeSize : { width: 120, height: 120 };
-        cy.nodes('[icon]').forEach(n => { n.data('width', n.data('width') || iconSize.width); n.data('height', n.data('height') || iconSize.height); });
+        cy.nodes('[icon]').forEach(n => {
+          const baseW = n.data('width') || iconSize.width;
+          const baseH = n.data('height') || iconSize.height;
+          n.data('width', Math.round(baseW * 1.2));
+          n.data('height', Math.round(baseH * 1.2));
+        });
         // initialize container default sizes
         cy.nodes('.container').forEach(c => { const def = dcfg.containerDefault || { width: 360, height: 240 }; c.data('width', c.data('width') || def.width); c.data('height', c.data('height') || def.height); });
 
@@ -372,6 +433,47 @@
             }
           } catch (e) { /* ignore */ }
         }
+
+        // Small EKS monitoring nudge: avoid Grafana/Prometheus/FluentBit overlap
+        try {
+          if (diagramKey === 'innovate-eks-architecture.json') {
+            const prom = cy.getElementById('prometheus');
+            const graf = cy.getElementById('grafana');
+            const fb = cy.getElementById('fluentbit');
+            const monitorContainer = cy.getElementById('ns-monitoring');
+            if (prom.length && graf.length && fb.length && monitorContainer.length) {
+              const center = monitorContainer.position();
+              // place them horizontally with wider separation to avoid overlap
+              const spread = 220; // increased spacing
+              prom.position({ x: center.x - spread, y: center.y });
+              graf.position({ x: center.x, y: center.y });
+              fb.position({ x: center.x + spread, y: center.y });
+
+              // ensure a minimum visual size for these monitoring icons
+              [prom, graf, fb].forEach(n => {
+                const w = Number(n.data('width')) || 120;
+                const h = Number(n.data('height')) || 120;
+                n.data('width', Math.max(w, 140));
+                n.data('height', Math.max(h, 140));
+              });
+
+              // resize the monitoring container to enclose children with padding
+              const childBB = cy.nodes().filter(n => n.data('parent') === monitorContainer.id()).boundingBox({ includeNodes: true });
+              if (childBB && Number.isFinite(childBB.x1)) {
+                const paddingX = 120;
+                const paddingY = 100;
+                const newW = Math.max(monitorContainer.data('width') || 360, (childBB.x2 - childBB.x1) + paddingX);
+                const newH = Math.max(monitorContainer.data('height') || 240, (childBB.y2 - childBB.y1) + paddingY);
+                monitorContainer.data('width', newW);
+                monitorContainer.data('height', newH);
+                // center container on children
+                const cx = (childBB.x1 + childBB.x2) / 2;
+                const cyPos = (childBB.y1 + childBB.y2) / 2;
+                monitorContainer.position({ x: cx, y: cyPos });
+              }
+            }
+          }
+        } catch (e) { /* ignore if nodes absent */ }
 
         // Final fit (show everything and then apply user-chosen scale percent)
         cy.fit(120);
@@ -441,8 +543,23 @@
     }
 
     document.getElementById('btnFit').addEventListener('click', async () => { await tidyLayout(); cy.fit(120); applyScalePercent(getScalePercent(), 220); });
-    document.getElementById('btnZoomIn').addEventListener('click', () => { try { const z = cy.zoom() * 1.2; cy.animate({ zoom: z }, { duration: 180 }); } catch(e){} });
-    document.getElementById('btnZoomOut').addEventListener('click', () => { try { const z = cy.zoom() / 1.2; cy.animate({ zoom: z }, { duration: 180 }); } catch(e){} });
+
+    // Zoom in/out while preserving the current pan (prevents unintended panning)
+    document.getElementById('btnZoomIn').addEventListener('click', () => {
+      try {
+        const currentPan = cy.pan();
+        const z = cy.zoom() * 1.2;
+        cy.animate({ zoom: z, pan: currentPan }, { duration: 180 });
+      } catch (e) { /* ignore */ }
+    });
+
+    document.getElementById('btnZoomOut').addEventListener('click', () => {
+      try {
+        const currentPan = cy.pan();
+        const z = cy.zoom() / 1.2;
+        cy.animate({ zoom: z, pan: currentPan }, { duration: 180 });
+      } catch (e) { /* ignore */ }
+    });
 
     // Search: highlight matching nodes
     searchEl.addEventListener('input', () => {
@@ -455,8 +572,108 @@
       });
     });
 
-    // Node click -> focus
-    cy.on('tap', 'node', (evt) => cy.fit(evt.target, 100));
+    // Node click -> gentle zoom + center (moderate, not full-fit)
+    cy.on('tap', 'node', (evt) => {
+      try {
+        const node = evt.target;
+        const nodePos = node.position();
+        const currentZoom = cy.zoom();
+        // mild scale up on click (25% max), clamped to reasonable range
+        const targetZoom = Math.max(0.5, Math.min(2.5, currentZoom * 1.25));
+        const pan = { x: cy.width() / 2 - nodePos.x * targetZoom, y: cy.height() / 2 - nodePos.y * targetZoom };
+        cy.animate({ zoom: targetZoom, pan }, { duration: 260 });
+      } catch (e) { /* fallback: no-op */ }
+    });
+
+    // Architecture design panel: lazy-load and render ARCHITECTURE_DESIGN.md
+    let designLoaded = false;
+    const designBtn = document.getElementById('btnDesign');
+    const designPanel = document.getElementById('designPanel');
+    const designContent = document.getElementById('designContent');
+
+    async function openDesignPanel() {
+      designPanel.classList.add('open');
+      designPanel.setAttribute('aria-hidden', 'false');
+      if (!designLoaded) {
+        try {
+          const res = await fetch('ARCHITECTURE_DESIGN.md');
+          if (res.ok) {
+            const md = await res.text();
+            if (window.marked) {
+              designContent.innerHTML = marked.parse(md);
+            } else {
+              // fallback: basic preformatted display
+              designContent.textContent = md;
+            }
+          } else {
+            designContent.textContent = `Failed to load ARCHITECTURE_DESIGN.md: ${res.status}`;
+          }
+        } catch (e) {
+          designContent.textContent = 'Error loading design document.';
+        }
+        designLoaded = true;
+      }
+    }
+
+    function closeDesignPanel() {
+      designPanel.classList.remove('open');
+      designPanel.setAttribute('aria-hidden', 'true');
+    }
+
+    designBtn.addEventListener('click', () => { if (designPanel.classList.contains('open')) closeDesignPanel(); else openDesignPanel(); });
+    // Auto-hide design panel when clicking outside the panel or the toggle button
+    document.addEventListener('click', (evt) => {
+      try {
+        const t = evt.target;
+        if (!designPanel.classList.contains('open')) return;
+        // if click was inside the panel or on the toggle button, keep it open
+        if (designPanel.contains(t) || designBtn.contains(t)) return;
+        closeDesignPanel();
+      } catch (e) { /* ignore */ }
+    });
+    // Hover interactions for icon nodes: highlight, enlarge, and show tooltip
+    const tooltipEl = document.getElementById('tooltip');
+    const ICON_HOVER_SCALE = 1.2;
+    const ICON_BASE_FONT = 19.2;
+    cy.on('mouseover', 'node[icon]', (evt) => {
+      const node = evt.target;
+      node.addClass('hover');
+      // animate to ~1.15x size
+      try {
+        const w = Number(node.data('width')) || 120;
+        const h = Number(node.data('height')) || 120;
+        node.animate({ style: { width: Math.round(w * ICON_HOVER_SCALE), height: Math.round(h * ICON_HOVER_SCALE), 'border-width': 3, 'font-size': Math.round(ICON_BASE_FONT * ICON_HOVER_SCALE) } }, { duration: 120 });
+      } catch (e) {}
+      // show tooltip near mouse
+      try {
+        tooltipEl.textContent = node.data('display') || node.data('label') || node.id();
+        tooltipEl.style.display = 'block';
+        const ev = evt.originalEvent;
+        if (ev && ev.clientX != null) {
+          tooltipEl.style.left = (ev.clientX + 12) + 'px';
+          tooltipEl.style.top = (ev.clientY + 12) + 'px';
+        }
+      } catch (e) {}
+    });
+
+    cy.on('mousemove', 'node[icon]', (evt) => {
+      const ev = evt.originalEvent;
+      if (ev && tooltipEl.style.display === 'block') {
+        tooltipEl.style.left = (ev.clientX + 12) + 'px';
+        tooltipEl.style.top = (ev.clientY + 12) + 'px';
+      }
+    });
+
+    cy.on('mouseout', 'node[icon]', (evt) => {
+      const node = evt.target;
+      node.removeClass('hover');
+      try {
+        const w = Number(node.data('width')) || 120;
+        const h = Number(node.data('height')) || 120;
+        node.animate({ style: { width: Math.round(w), height: Math.round(h), 'border-width': 2, 'font-size': ICON_BASE_FONT } }, { duration: 120 });
+      } catch (e) {}
+      tooltipEl.style.display = 'none';
+    });
     selectEl.addEventListener('change', (evt) => loadDiagram(evt.target.value));
 
     // Initial load: await diagram load, tidy layout and apply user scale

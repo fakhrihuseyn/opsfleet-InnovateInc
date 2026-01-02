@@ -1,4 +1,5 @@
 # Cloud Architecture Design Document
+
 ## Innovate Inc. - Web Application Platform
 
 ### Executive Summary
@@ -41,16 +42,19 @@ This document presents a comprehensive cloud architecture design for Innovate In
 ### Justification for Multi-Account Strategy
 
 **Isolation Benefits:**
+
 - **Security**: Complete isolation between production and non-production workloads
 - **Blast Radius Limitation**: Issues in dev/staging cannot impact production
 - **Compliance**: Clear separation for audit and regulatory requirements
 
 **Billing & Management:**
+
 - **Cost Attribution**: Clear cost breakdown per environment
 - **Resource Limits**: Prevent dev environments from consuming excessive resources
 - **Governance**: Environment-specific policies and access controls
 
 **Operational Benefits:**
+
 - **Independent Scaling**: Each environment can scale independently
 - **Deployment Safety**: Changes tested in isolated staging environment
 - **Disaster Recovery**: Production remains unaffected by development activities
@@ -62,6 +66,7 @@ This document presents a comprehensive cloud architecture design for Innovate In
 ### VPC Architecture
 
 **Production VPC Structure:**
+
 - **VPC CIDR**: `10.0.0.0/16` (65,536 IPs)
 - **Multi-AZ Deployment**: 3 Availability Zones for high availability
 - **Subnet Strategy**: Public and private subnets across all AZs
@@ -101,11 +106,13 @@ This document presents a comprehensive cloud architecture design for Innovate In
    - Retention period: 30 days for compliance
 
 **Internet Gateway & NAT Strategy:**
+
 - **Internet Gateway**: Attached to VPC for public subnet internet access
 - **NAT Gateways**: One per AZ in public subnets for private subnet outbound access
 - **Route Tables**: Separate tables for public and private subnets
 
 **Private Connectivity:**
+
 - **VPC Endpoints**: For AWS services (S3, ECR, CloudWatch) to avoid internet routing
 - **Interface Endpoints**: For private communication with AWS APIs
 - **Gateway Endpoints**: For S3 and DynamoDB access
@@ -117,6 +124,7 @@ This document presents a comprehensive cloud architecture design for Innovate In
 ### Amazon EKS Architecture
 
 **Cluster Configuration:**
+
 - **EKS Version**: Latest stable version (1.28+)
 - **Control Plane**: Managed by AWS across 3 AZs
 - **API Server Endpoint**: Private with limited public access
@@ -143,6 +151,7 @@ This document presents a comprehensive cloud architecture design for Innovate In
    - **Cost Optimization**: 60-90% savings vs on-demand
 
 **Cluster Autoscaling:**
+
 - **Cluster Autoscaler**: Automatically adjusts node count based on pod demands
 - **Horizontal Pod Autoscaler (HPA)**: Scales pods based on CPU/memory metrics
 - **Vertical Pod Autoscaler (VPA)**: Recommends and adjusts resource requests
@@ -160,6 +169,7 @@ This document presents a comprehensive cloud architecture design for Innovate In
    - **Lifecycle Policies**: Keep last 10 images, delete older than 30 days
 
 2. **Image Building Process**:
+
    ```yaml
    # Multi-stage Dockerfile example for backend
    FROM python:3.11-slim as builder
@@ -182,6 +192,7 @@ This document presents a comprehensive cloud architecture design for Innovate In
    - **Dependency Management**: Chart dependencies for databases, caching
 
 **Security & Compliance:**
+
 - **Pod Security Standards**: Enforce restricted security context
 - **Network Policies**: Restrict pod-to-pod communication
 - **OPA Gatekeeper**: Policy enforcement for resource creation
@@ -196,6 +207,7 @@ This document presents a comprehensive cloud architecture design for Innovate In
 **Service Recommendation: Amazon RDS for PostgreSQL**
 
 **Justification:**
+
 - **Managed Service**: AWS handles patching, backups, monitoring
 - **High Availability**: Multi-AZ deployment with automatic failover
 - **Performance**: Optimized for PostgreSQL workloads
@@ -220,12 +232,14 @@ This document presents a comprehensive cloud architecture design for Innovate In
 ### Backup Strategy
 
 **Automated Backups:**
+
 - **Backup Window**: Daily during low-traffic hours (2-3 AM UTC)
 - **Retention Period**: 30 days for point-in-time recovery
 - **Cross-Region Backup**: Weekly snapshots copied to secondary region
 - **Backup Encryption**: All backups encrypted with customer-managed KMS keys
 
 **Manual Snapshots:**
+
 - **Pre-Deployment**: Snapshot before major application deployments
 - **Quarterly**: Long-term snapshots for compliance (1-year retention)
 - **Testing**: Regular snapshot restoration testing
@@ -254,6 +268,7 @@ This document presents a comprehensive cloud architecture design for Innovate In
    - **Activation**: Manual promotion process
 
 2. **Recovery Procedures:**
+
    ```bash
    # Automated DR activation process
    1. Promote read replica to primary in DR region
@@ -275,12 +290,14 @@ This document presents a comprehensive cloud architecture design for Innovate In
 ### Identity & Access Management
 
 **AWS IAM Strategy:**
+
 - **Principle of Least Privilege**: Minimal permissions required
 - **Role-Based Access**: Service roles for applications
 - **MFA**: Required for all human access
 - **Service Accounts**: EKS service accounts with IRSA
 
 **Kubernetes Security:**
+
 - **RBAC**: Role-based access control for users and services
 - **Pod Security Standards**: Enforce restricted security contexts
 - **Network Policies**: Micro-segmentation within cluster
@@ -289,12 +306,14 @@ This document presents a comprehensive cloud architecture design for Innovate In
 ### Data Protection
 
 **Encryption Strategy:**
+
 - **At Rest**: All storage encrypted (RDS, EBS, S3)
 - **In Transit**: TLS 1.3 for all communications
 - **Application Level**: Sensitive fields encrypted in database
 - **Key Management**: AWS KMS with customer-managed keys
 
 **Secrets Management:**
+
 - **AWS Secrets Manager**: Database credentials and API keys
 - **External Secrets Operator**: Sync secrets to Kubernetes
 - **Rotation**: Automatic rotation for database credentials
@@ -303,12 +322,14 @@ This document presents a comprehensive cloud architecture design for Innovate In
 ### Monitoring & Compliance
 
 **Observability Stack:**
+
 - **Prometheus**: Metrics collection from applications and infrastructure
 - **Grafana**: Dashboards and visualization
 - **Jaeger**: Distributed tracing for microservices
 - **FluentBit**: Log collection and forwarding
 
 **Security Monitoring:**
+
 - **AWS GuardDuty**: Threat detection for AWS accounts
 - **AWS Security Hub**: Centralized security findings
 - **Falco**: Runtime security monitoring in Kubernetes
@@ -321,12 +342,14 @@ This document presents a comprehensive cloud architecture design for Innovate In
 ### Compute Cost Optimization
 
 **EKS Cost Management:**
+
 - **Spot Instances**: 60-90% cost reduction for non-critical workloads
 - **Cluster Autoscaler**: Automatic scaling to prevent over-provisioning
 - **Fargate**: For sporadic workloads with unpredictable patterns
 - **Resource Requests**: Right-sized requests to improve bin packing
 
 **Reserved Capacity:**
+
 - **Savings Plans**: Compute Savings Plans for predictable workloads
 - **Reserved Instances**: 1-3 year commitments for baseline capacity
 - **Capacity Planning**: Monitor usage patterns for optimization
@@ -334,11 +357,13 @@ This document presents a comprehensive cloud architecture design for Innovate In
 ### Storage & Data Transfer
 
 **Storage Optimization:**
+
 - **S3 Lifecycle Policies**: Automatic transition to cheaper storage classes
 - **EBS GP3**: Cost-optimized storage with independent IOPS provisioning
 - **Data Lifecycle**: Archive old logs and backups to Glacier
 
 **Network Cost Management:**
+
 - **VPC Endpoints**: Reduce NAT Gateway charges for AWS service traffic
 - **CloudFront**: CDN for static assets to reduce data transfer costs
 - **Regional Planning**: Keep related resources in same region
@@ -346,6 +371,7 @@ This document presents a comprehensive cloud architecture design for Innovate In
 ### Monitoring & Governance
 
 **Cost Monitoring:**
+
 - **AWS Cost Explorer**: Track spending trends and patterns
 - **Budgets & Alerts**: Proactive notifications for cost thresholds
 - **Resource Tagging**: Detailed cost allocation by environment/team
@@ -358,12 +384,14 @@ This document presents a comprehensive cloud architecture design for Innovate In
 ### Application Scaling
 
 **Horizontal Scaling:**
+
 - **Kubernetes HPA**: Scale pods based on CPU/memory/custom metrics
 - **Application Load Balancer**: Distribute traffic across multiple pods
 - **Database Scaling**: Read replicas for read-heavy workloads
 - **Caching Strategy**: Redis/ElastiCache for frequently accessed data
 
 **Traffic Management:**
+
 - **AWS ALB**: Application Load Balancer with SSL termination
 - **CloudFront CDN**: Global content delivery network
 - **Route 53**: DNS-based routing and health checks
@@ -372,17 +400,20 @@ This document presents a comprehensive cloud architecture design for Innovate In
 ### Growth Planning
 
 **Phase 1: Launch (Hundreds of Users)**
+
 - **EKS**: 3 nodes (m6i.large)
 - **RDS**: Single AZ db.t3.medium
 - **Estimated Cost**: $800-1,200/month
 
 **Phase 2: Growth (Thousands of Users)**
+
 - **EKS**: 5-10 nodes with autoscaling
 - **RDS**: Multi-AZ db.r6g.large with read replica
 - **Caching**: ElastiCache Redis cluster
 - **Estimated Cost**: $2,000-3,500/month
 
 **Phase 3: Scale (Millions of Users)**
+
 - **EKS**: 20-50 nodes across multiple node groups
 - **RDS**: Clustered PostgreSQL with multiple read replicas
 - **Global**: Multi-region deployment
@@ -393,24 +424,28 @@ This document presents a comprehensive cloud architecture design for Innovate In
 ## 8. Implementation Roadmap
 
 ### Phase 1: Foundation (Weeks 1-2)
+
 1. Set up AWS accounts and basic networking
 2. Deploy EKS cluster with basic configuration
 3. Set up CI/CD pipeline with basic deployment
 4. Deploy minimal viable application
 
 ### Phase 2: Production Readiness (Weeks 3-4)
+
 1. Implement comprehensive monitoring and logging
 2. Set up backup and disaster recovery procedures
 3. Implement security best practices
 4. Load testing and performance optimization
 
 ### Phase 3: Advanced Features (Weeks 5-6)
+
 1. Implement advanced scaling policies
 2. Set up chaos engineering and reliability testing
 3. Implement advanced security features
 4. Documentation and team training
 
 ### Phase 4: Optimization (Ongoing)
+
 1. Continuous cost optimization
 2. Performance tuning based on real usage
 3. Security updates and compliance monitoring
