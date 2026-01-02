@@ -34,5 +34,3 @@ Notes & tips
 - To tweak node label font sizes or connector label sizes edit the Cytoscape style in `index.html` (look for `selector: 'node'`, `selector: 'node[icon]'` and `selector: 'edge'`).
 - To tune per-diagram layout options open the `diagramConfigs` object in `index.html` and adjust `layoutOptions`, `nodeSize`, and `presets`.
 - If you want me to swap icon fallbacks or fetch official brand SVGs (Helm/ArgoCD), say so and I will update `assets/icons/` from a reliable CDN.
-
-If you'd like, I can add a one-click preview script or a `package.json` + `vite` dev server for faster iteration.
